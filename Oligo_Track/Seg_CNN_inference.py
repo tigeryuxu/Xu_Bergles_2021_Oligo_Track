@@ -36,7 +36,7 @@ import tkinter
 from tkinter import filedialog
 
 import torch
-from torch import nn
+# from torch import nn
 
 from UNet_pytorch_online import *
 from tracker import *

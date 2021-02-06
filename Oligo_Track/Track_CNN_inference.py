@@ -15,41 +15,57 @@ To run:
                 b/c the last 20 z-slices are discarded to account for possible large shifts in tissue movement
                 so always segment 20 slices more than you actually care about
     
+    
+    
+    ***NOTES FOR USER:
+        - cells on border are dropped
+        - cells at bottom are also dropped
+            ***include in GUI
+    
 """
+
+import glob, os
+""" check if on windows or linux """
+if os.name == 'posix':  platform = 'linux'
+elif os.name == 'nt': platform = 'windows'
+else:
+    platform = 0
 
 import numpy as np
 import matplotlib.pyplot as plt
 from natsort import natsort_keygen, ns
+natsort_key1 = natsort_keygen(key = lambda y: y.lower())      # natural sorting order
+
 from skimage import measure
 import pandas as pd
-import glob, os
-natsort_key1 = natsort_keygen(key = lambda y: y.lower())      # natural sorting order
-from tifffile import *
+
+import tifffile as tiff
 import tkinter
 from tkinter import filedialog
 
 import torch
-from torch import nn
-import torch.nn.functional as F
-import torch.optim as optim
+# from torch import nn
+# import torch.nn.functional as F
+# import torch.optim as optim
 
 from UNet_pytorch_online import *
-from PYTORCH_dataloader import *
-from UNet_functions_PYTORCH import *
+# from PYTORCH_dataloader import *
+from functional.UNet_functions_PYTORCH import *
 
-from matlab_crop_function import *
-from plot_functions_CLEANED import *
-from data_functions_CLEANED import *
-from data_functions_3D import *
-from functions_cell_track_auto import *
+from functional.matlab_crop_function import *
+from functional.plot_functions_CLEANED import *
+from functional.data_functions_CLEANED import *
+from functional.data_functions_3D import *
+from functional.functions_cell_track_auto import *
 from skimage.transform import rescale, resize, downscale_local_mean
 
-from PLOT_FIGURES_functions import *
+
+from plot_functions.PLOT_FIGURES_functions import *
 
 
-import pandas as pd
-import scipy.stats as sp
-import seaborn as sns
+# import pandas as pd
+# import scipy.stats as sp
+# import seaborn as sns
 
 
 """ Define transforms"""
@@ -63,7 +79,7 @@ plt.rc('ytick',labelsize=14)
 
 
 """ Define GPU to use """
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 """  Network Begins: """
@@ -84,27 +100,19 @@ scale_xy = 0.83; scale_z = 3
 # Read in file names
 onlyfiles_check = glob.glob(os.path.join(s_path,'check_*'))
 onlyfiles_check.sort(key = natsort_key1)
-
-""" Find last checkpoint """       
+     
 last_file = onlyfiles_check[-1]
 split = last_file.split('check_')[-1]
 num_check = split.split('.')
 checkpoint = num_check[0]
 checkpoint = 'check_' + checkpoint
-num_check = int(num_check[0])
 
 check = torch.load(s_path + checkpoint, map_location=device)
+tracker = check['tracker']
+mean_arr = tracker.mean_arr; std_arr = tracker.std_arr
 
 unet = check['model_type']; unet.load_state_dict(check['model_state_dict'])
 unet.to(device); unet.eval()
-#unet.training # check if mode set correctly
-
-print('parameters:', sum(param.numel() for param in unet.parameters()))
-
-# """ load mean and std """  
-input_path = './normalize_pytorch_CLEANED/'
-mean_arr = np.load(input_path + 'mean_VERIFIED.npy')
-std_arr = np.load(input_path + 'std_VERIFIED.npy')
 
 
 """ Select multiple folders for analysis AND creates new subfolder for results output """
@@ -114,7 +122,7 @@ another_folder = 'y';
 list_folder = []
 input_path = "./"
 
-initial_dir = '/media/user/storage/Data/'
+initial_dir = './'
 while(another_folder == 'y'):
     input_path = filedialog.askdirectory(parent=root, initialdir= initial_dir,
                                         title='Please select input directory')
@@ -128,11 +136,7 @@ while(another_folder == 'y'):
     initial_dir = input_path
         
 
-""" Loop through all the folders and do the analysis!!!"""
-
-net_two_identified = 0;
-net_two_tested = 0;
-    
+""" Loop through all the folders and do the analysis!!!"""   
 for input_path in list_folder:
     foldername = input_path.split('/')[-2]
     sav_dir = input_path + '/' + foldername + '_output_FULL_AUTO_no_next_10_125762_TEST_8_INTENSITY'
@@ -150,31 +154,25 @@ for input_path in list_folder:
         
     sav_dir = sav_dir + '/'
     
-    """ Initialize matrix of cells """   
-    input_name = examples[0]['input']            
-    input_im = open_image_sequence_to_3D(input_name, width_max='default', height_max='default', depth='default')
-    depth_total, empty, empty = input_im.shape
+    """ Load input data and segmentations for Seg-CNN"""   
+    input_name = examples[0]['input']
+    input_im = tiff.imread(input_name);  depth_total, empty, empty = input_im.shape
+    input_im = np.moveaxis(input_im, 0, -1); width_tmp, height_tmp, depth_tmp = input_im.shape
     
-    #input_im = input_im[0:lowest_z_depth, ...]
-    input_im = np.moveaxis(input_im, 0, -1)
-    width_tmp, height_tmp, depth_tmp = input_im.shape
-       
+    ### get Seg-CNN outputs
     seg_name = examples[0]['seg']  
-    cur_seg = open_image_sequence_to_3D(seg_name, width_max='default', height_max='default', depth='default')
-    #cur_seg = cur_seg[0:lowest_z_depth, ...]
+    cur_seg = tiff.imread(seg_name)
     cur_seg[lowest_z_depth:-1, ...] = 0   ### CLEAR EVERY CELL BELOW THIS DEPTH
-    
     cur_seg = np.moveaxis(cur_seg, 0, -1)
-     
-    """ loop through each cell in cur_seg and find match in next_seg
+    
+    
+    """  add the cells from the first frame into "tracked_cells" matrix
     """
     cur_seg[cur_seg > 0] = 1
     labelled = measure.label(cur_seg)
     cur_cc = measure.regionprops(labelled, intensity_image=input_im)
     tracked_cells_df = pd.DataFrame(columns = {'SERIES', 'COLOR', 'FRAME', 'X', 'Y', 'Z', 'coords', 'visited', 'mean_intensity'})     
     
-
-    """ add the cells from the first frame into "tracked_cells" matrix """ 
     for cell in cur_cc:
          if not np.isnan(np.max(tracked_cells_df.SERIES)):
               series = np.max(tracked_cells_df.SERIES) + 1
@@ -192,9 +190,6 @@ for input_path in list_folder:
          tracked_cells_df = tracked_cells_df.append(row, ignore_index=True) 
     
     """ Start looping through segmented nuclei """
-    #list_exclude = [];
-    #TN = 0; TP = 0; FN = 0; FP = 0; doubles = 0; extras = 0; skipped = 0; blobs = 0; not_registered = 0; double_linked = 0; seg_error = 0;
-    
     animator_iterator = 0;
     all_size_pairs = []
     for frame_num in range(1, len(examples)):
@@ -205,13 +200,12 @@ for input_path in list_folder:
 
             """ Gets next seg as well """
             input_name = examples[frame_num]['input']            
-            next_input = open_image_sequence_to_3D(input_name, width_max='default', height_max='default', depth='default')
-            #next_input = np.moveaxis(next_input[0:lowest_z_depth, ...], 0, -1)
+            next_input = tiff.imread(input_name);
             next_input = np.moveaxis(next_input, 0, -1)
 
             
-            seg_name = examples[frame_num]['seg']  
-            next_seg = open_image_sequence_to_3D(seg_name, width_max='default', height_max='default', depth='default')
+            seg_name = examples[frame_num]['seg']
+            next_seg = tiff.imread(seg_name);
             next_seg[lowest_z_depth:-1, ...] = 0   ### CLEAR EVERY CELL BELOW THIS DEPTH
             next_seg = np.moveaxis(next_seg, 0, -1)
 
@@ -427,6 +421,8 @@ for input_path in list_folder:
             ### then also checkup on all the following cells that were deleted and need to be rechecked
             tracked_cells_df, all_dist, dist_check, check_series = check_predicted_distances(tracked_cells_df, frame_num, crop_size, z_size, dist_error_thresh=10)
 
+
+
             """ Reverse and check each "NEW" cell to ensure it's actually new """
             size_ex = 100
             size_upper = 1000   ### above this is pretty certain will be a large cell so no need to test
@@ -625,12 +621,6 @@ for input_path in list_folder:
     print('duplicates: ' + str(np.where(tracked_cells_df.duplicated(subset=['X', 'Y', 'Z',  'FRAME']))))    ### *** REAL DUPLICATES
     tracked_cells_df.iloc[np.where(tracked_cells_df.duplicated(subset=['X', 'Y', 'Z',  'FRAME'], keep=False))[0]]
     
-    #print('double_linked throughout analysis: ' + str(double_linked))
-    #print('num_blobs: ' + str(num_blobs))
-    #print('duplicates: ' + str(np.where(tracked_cells_df.duplicated(subset=['X', 'Y', 'Z',  'SERIES']))))   ### cell in same location across frames
-    #tracked_cells_df.iloc[np.where(tracked_cells_df.duplicated(subset=['X', 'Y', 'Z',  'SERIES'], keep=False))[0]]
-
-    
     ### (1) unsure that all of 'RED' or 'YELLOW' are indicated as such
     ### ***should be fine, just turn all "BLANK" into "GREEN"  
     tracked_cells_df.COLOR[tracked_cells_df['COLOR'] == 'BLANK'] = 'Green'
@@ -768,12 +758,12 @@ for input_path in list_folder:
          
             output_frame = gen_im_frame_from_array(tracked_cells_df, frame_num=frame_num, input_im=input_im)
             im = convert_matrix_to_multipage_tiff(output_frame)
-            imsave(sav_dir + filename + '_' + str(frame_num) + '_output_CLEANED.tif', im)
+            tiff.imsave(sav_dir + filename + '_' + str(frame_num) + '_output_CLEANED.tif', im)
         
 
             output_frame = gen_im_new_term_from_array(tracked_cells_df, frame_num=frame_num, input_im=input_im, new=1)
             im = convert_matrix_to_multipage_tiff(output_frame)
-            imsave(sav_dir + filename + '_' + str(frame_num) + '_output_NEW.tif', im)
+            tiff.imsave(sav_dir + filename + '_' + str(frame_num) + '_output_NEW.tif', im)
             
 
     """ Drop unsaveable stuff and re-order the axis"""

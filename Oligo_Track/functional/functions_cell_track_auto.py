@@ -9,11 +9,11 @@ Created on Wed Sep  2 13:24:27 2020
 
 from skimage import measure
 import numpy as np
-from plot_functions_CLEANED import *
-from data_functions_CLEANED import *
-from data_functions_3D import *
-from matlab_crop_function import *
-from UNet_functions_PYTORCH import *
+from functional.plot_functions_CLEANED import *
+from functional.data_functions_CLEANED import *
+from functional.data_functions_3D import *
+from functional.UNet_functions_PYTORCH import *
+from functional.matlab_crop_function import *
 
 import time
 import progressbar
