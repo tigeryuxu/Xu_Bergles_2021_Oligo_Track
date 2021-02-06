@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from switchable_BN import *
+from layers.switchable_BN import *
 
 class UNet_online(nn.Module):
     def __init__(

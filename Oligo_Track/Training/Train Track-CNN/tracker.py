@@ -39,7 +39,7 @@ class tracker():
 
 
         """ Normalization """
-        self.mean_arr = mean_arridx_val
+        self.mean_arr = mean_arr
         self.std_arr = std_arr
         
 

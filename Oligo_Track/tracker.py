@@ -5,7 +5,7 @@ Created on Sun Jun 28 14:39:11 2020
 
 @author: user
 """
-from plot_functions_CLEANED import *
+from functional.plot_functions_CLEANED import *
 import matplotlib.pyplot as plt
 
 
@@ -26,7 +26,12 @@ class tracker():
         self.val_loss_per_eval = []; self.val_jacc_per_eval = []
         self. plot_sens = []; self.plot_sens_val = [];
         self.plot_prec = []; self.plot_prec_val = [];
+        self.plot_acc = [];
+        
         self.lr_plot = [];
+        
+        
+        
         self.iterations = 0;
         self.cur_epoch = 0;
         
@@ -53,6 +58,8 @@ class tracker():
         self.sp_weight_bool = sp_weight_bool
         self.transforms = transforms
         self.dataset = dataset
+        
+        self.next_seg = 1;
 
 
     def print_essential(self):
@@ -75,7 +82,8 @@ def show_vars(obj_name):
 """ Plot metrics in tracker """           
 def plot_tracker(tracker, s_path):
 
-    plot_metric_fun(tracker.train_jacc_per_epoch, tracker.val_jacc_per_eval, class_name='', metric_name='jaccard', plot_num=32)
+    plot_metric_fun(tracker.train_jacc_per_epoch, tracker.val_jacc_per_eval, class_name='', metric_name='jaccard', plot_num=32,
+                    location='lower right')
     plt.figure(32); plt.savefig(s_path + 'Jaccard.png')
     
        
