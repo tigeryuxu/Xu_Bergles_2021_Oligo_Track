@@ -55,6 +55,49 @@ def plot_max(im, ax=0, plot=1):
 
 
 """ Plots generic training outputs for Huganir lab data """
+def plot_trainer_3D_PYTORCH(seg_train, seg_val, input_im, input_im_val, truth_im, truth_im_val,
+                 s_path, epochs, plot_depth=0):
+       """ Plot for debug """
+
+       fig = plt.figure(num=3, figsize=(10, 10), dpi=80, facecolor='w', edgecolor='k')
+       fig.subplots_adjust(hspace=.3)
+       
+       plt.subplot(3,2,1); plt.imshow(input_im[plot_depth, :, :]); plt.title('Input image train');
+       plt.subplot(3,2,3); plt.imshow(truth_im[plot_depth, :, :]); plt.title('Truth Train');
+       plt.subplot(3,2,5); plt.imshow(seg_train[plot_depth, :, :]); plt.title('Output Train');
+       
+       plt.subplot(3,2,2); plt.imshow(input_im_val[plot_depth, :, :]); plt.title('Input image val');
+       plt.subplot(3,2,4); plt.imshow(truth_im_val[plot_depth, :, :]); plt.title('Truth val');
+       plt.subplot(3,2,6); plt.imshow(seg_val[plot_depth, :, :]); plt.title('Output val');   
+       
+       plt.savefig(s_path + '_' + str(epochs) + '_output.png')
+       
+       
+       """ Plot for max project evaluate """
+       truth_im = np.amax(truth_im, axis= 0)
+       truth_im_val = np.amax(truth_im_val, axis = 0)
+       seg_train = np.amax(seg_train, axis = 0)
+       seg_val = np.amax(seg_val, axis = 0)
+
+
+       input_im = np.amax(input_im, axis = 0)
+       input_im_val = np.amax(input_im_val, axis = 0)                                          
+
+
+       fig = plt.figure(num=5, figsize=(10, 10), dpi=80, facecolor='w', edgecolor='k')
+       fig.subplots_adjust(hspace=.3)
+       
+       plt.subplot(3,2,1); plt.imshow(input_im[:, :]); plt.title('Input image train');
+       plt.subplot(3,2,3); plt.imshow(truth_im[:, :]); plt.title('Truth Train');
+       plt.subplot(3,2,5); plt.imshow(seg_train[:, :]); plt.title('Output Train');
+       
+       plt.subplot(3,2,2); plt.imshow(input_im_val[:,  :]); plt.title('Input image val');
+       plt.subplot(3,2,4); plt.imshow(truth_im_val[:, :]); plt.title('Truth val');
+       plt.subplot(3,2,6); plt.imshow(seg_val[:, :]); plt.title('Output val');   
+       
+       plt.savefig(s_path + '_' + str(epochs) + '_max_project_output.png') 
+
+""" Plots generic training outputs for Huganir lab data """
 def plot_trainer_3D_PYTORCH_cell_track_AUTO(seg_train, seg_val, input_im, input_im_val, truth_im, truth_im_val,
                  s_path, epochs, plot_depth=0):
     

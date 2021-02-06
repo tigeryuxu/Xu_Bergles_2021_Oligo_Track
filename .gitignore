@@ -16,6 +16,7 @@ check*.meta
 *.npz
 *.pkl
 *.out
+check_*
 1_CNN_training_and_testing_PYTHON/(3) Checkpoints_add_dropout/checkpoint
 1_CNN_training_and_testing_PYTHON/(1) Checkpoints/1st_run_with_error_image/checkpoint
 1_CNN_training_and_testing_PYTHON/(1) Checkpoints/checkpoint

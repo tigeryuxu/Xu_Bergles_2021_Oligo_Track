@@ -9,7 +9,7 @@ Created on Fri May 15 12:10:34 2020
 
 import torch
 import numpy as np
-from data_functions_CLEANED import *
+from functional.data_functions_CLEANED import *
 
 
 
