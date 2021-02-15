@@ -44,14 +44,11 @@ import tkinter
 from tkinter import filedialog
 
 import torch
-# from torch import nn
-# import torch.nn.functional as F
-# import torch.optim as optim
-
 from UNet_pytorch_online import *
-# from PYTORCH_dataloader import *
-from functional.UNet_functions_PYTORCH import *
 
+
+
+from functional.UNet_functions_PYTORCH import *
 from functional.matlab_crop_function import *
 from functional.plot_functions_CLEANED import *
 from functional.data_functions_CLEANED import *
@@ -59,13 +56,7 @@ from functional.data_functions_3D import *
 from functional.functions_cell_track_auto import *
 from skimage.transform import rescale, resize, downscale_local_mean
 
-
 from plot_functions.PLOT_FIGURES_functions import *
-
-
-# import pandas as pd
-# import scipy.stats as sp
-# import seaborn as sns
 
 
 """ Define transforms"""
@@ -84,6 +75,36 @@ print(device)
 
 """  Network Begins: """
 s_path = './(10) Checkpoints_full_auto_no_spatialW_large_TRACKER_CROP_PADS_NO_NEXT_only_check/'; next_bool = 0;
+
+
+
+
+# import PySimpleGUI as sg
+
+# sg.theme('DarkAmber')   # Add a touch of color
+# # All the stuff inside your window.
+# layout = [  [sg.Text('Some text on Row 1')],
+#             [sg.Text('Minimum size'), sg.InputText()],
+#             [sg.Text('Scale XY (um/px)'), sg.InputText()],
+#             [sg.Text('Scale Z (um/px)'), sg.InputText()],
+#             [sg.Text('Exclude cells on edge (# px)'), sg.InputText()],
+#             [sg.Button('Ok'), sg.Button('Cancel')] ]
+
+# # Create the Window
+# window = sg.Window('Choose input parameters', layout)
+# # Event Loop to process "events" and get the "values" of the inputs
+# while True:
+#     event, values = window.read()
+#     if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
+#         break
+#     print('You entered ', values[0])
+
+# window.close()
+
+
+# zz
+
+
 
 
 lowest_z_depth = 140;

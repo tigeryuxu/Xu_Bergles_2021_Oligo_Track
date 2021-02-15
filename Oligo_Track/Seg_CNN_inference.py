@@ -53,6 +53,56 @@ from skimage.filters import threshold_triangle
 torch.backends.cudnn.benchmark = True  
 torch.backends.cudnn.enabled = True  # new thing? what do? must be True
 
+
+
+
+import PySimpleGUI as sg
+
+# sg.theme('DarkAmber')   # Add a touch of color
+# # All the stuff inside your window.
+# layout = [  [sg.Text('Some text on Row 1')],
+#             [sg.Text('SNR warning thresh (optional)'), sg.InputText()],
+#             [sg.Button('Select folder for analysis'), sg.Button('Cancel')] ]
+
+# # Create the Window
+# window = sg.Window('Window Title', layout)
+# # Event Loop to process "events" and get the "values" of the inputs
+# while True:
+#     event, values = window.read()
+#     if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
+#         break
+#     print('You entered ', values[0])
+
+
+#     if event == 'Select folder for analysis':
+
+#         """ Select multiple folders for analysis AND creates new subfolder for results output """
+#         root = tkinter.Tk()
+#         # get input folders
+#         another_folder = 'y';
+#         list_folder = []
+#         input_path = "./"
+        
+#         initial_dir = './'
+#         while(another_folder == 'y'):
+#             input_path = filedialog.askdirectory(parent=root, initialdir= initial_dir,
+#                                                 title='Please select input directory')
+#             input_path = input_path + '/'
+            
+#             print('Do you want to select another folder? (y/n)')
+#             another_folder = input();   # currently hangs forever
+#             #another_folder = 'y';
+        
+#             list_folder.append(input_path)
+#             initial_dir = input_path
+            
+            
+        
+#         window.close()
+        
+
+# zz
+
 """ Define GPU to use """
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
