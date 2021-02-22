@@ -14,7 +14,10 @@ cd Xu_Bergles_2021_Oligo_Track
 virtualenv -p python3.7 venv
 source venv/bin/activate
 ```
-	- Windows:
+
+- Windows:
+
+
 
 ```
 virtualenv -p python3.7 venv
