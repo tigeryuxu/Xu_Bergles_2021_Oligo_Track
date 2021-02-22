@@ -75,19 +75,19 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 """  Network Begins: """
-s_path = './(10) Checkpoints_full_auto_no_spatialW_large_TRACKER_CROP_PADS_NO_NEXT_only_check/'; next_bool = 0;
-
+#s_path = './(10) Checkpoints_full_auto_no_spatialW_large_TRACKER_CROP_PADS_NO_NEXT_only_check/'; next_bool = 0;
+s_path = './Checkpoints/'; next_bool = 0;
 
 """ TO LOAD OLD CHECKPOINT """
 # Read in file names
-onlyfiles_check = glob.glob(os.path.join(s_path,'check_*'))
+onlyfiles_check = glob.glob(os.path.join(s_path,'Track_CNN_check_*'))
 onlyfiles_check.sort(key = natsort_key1)
      
 last_file = onlyfiles_check[-1]
 split = last_file.split('check_')[-1]
 num_check = split.split('.')
 checkpoint = num_check[0]
-checkpoint = 'check_' + checkpoint
+checkpoint = 'Track_CNN_check_' + checkpoint
 
 check = torch.load(s_path + checkpoint, map_location=device)
 tracker = check['tracker']

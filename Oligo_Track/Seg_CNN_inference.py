@@ -47,9 +47,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 """  Network Begins: """
-#s_path = './(19) Checkpoints_TITAN_NO_transforms_AdamW_batch_norm_CLEAN_DATA/'
-s_path = './(21) Checkpoints_PYTORCH_NO_transforms_AdamW_batch_norm_CLEAN_DATA_LARGE_NETWORK/'
-
+#s_path = './(21) Checkpoints_PYTORCH_NO_transforms_AdamW_batch_norm_CLEAN_DATA_LARGE_NETWORK/'
+s_path = './Checkpoints/'
 
 overlap_percent = 0.5
 input_size = 256
@@ -58,14 +57,14 @@ num_truth_class = 2
 
 """ TO LOAD OLD CHECKPOINT """
 # Read in file names
-onlyfiles_check = glob.glob(os.path.join(s_path,'check_*'))
+onlyfiles_check = glob.glob(os.path.join(s_path,'Seg_CNN_check_*'))
 onlyfiles_check.sort(key = natsort_key1)
       
 last_file = onlyfiles_check[-1]
 split = last_file.split('check_')[-1]
 num_check = split.split('.')
 checkpoint = num_check[0]
-checkpoint = 'check_' + checkpoint
+checkpoint = 'Seg_CNN_check_' + checkpoint
 check = torch.load(s_path + checkpoint, map_location=device)
 tracker = check['tracker']
 

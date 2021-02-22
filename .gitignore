@@ -18,7 +18,7 @@ check*.meta
 *.out
 check_*
 
-Oligo_Track/Checkpoints/*
+Oligo_Track/Checkpoints/*_check_*
 
 1_CNN_training_and_testing_PYTHON/(3) Checkpoints_add_dropout/checkpoint
 1_CNN_training_and_testing_PYTHON/(1) Checkpoints/1st_run_with_error_image/checkpoint
