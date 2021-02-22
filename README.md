@@ -43,7 +43,7 @@ pip install numpy matplotlib natsort scikit-image tifffile pandas PySimpleGUI sk
 * Each tiff stack must be single channel, grayscale, uint8 and named in ascending order of timeseries
    
 ### Analysis pipeline overview:
-1. Run Seg_CNN_inference.py. Select input folders as indicated by GUI.
+1. Run Seg_CNN_inference.py. Select input folders as indicated by GUI. (*remember to activate virtual environment as above)
 ```
 cd Oligo_Track
 python Seg_CNN_inference.py
