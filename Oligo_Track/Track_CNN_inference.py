@@ -22,15 +22,19 @@ To run:
         - cells at bottom are also dropped
             ***include in GUI
     
+    
+    ***NOTES for post-processing:
+        - need to figure out depth from cortex
+        ... output scripts still need adjusting...
+    
+    
 """
 
-import glob, os
-""" check if on windows or linux """
-if os.name == 'posix':  platform = 'linux'
-elif os.name == 'nt': platform = 'windows'
-else:
-    platform = 0
 
+import sys
+sys.path.insert(0, './layers')
+
+import glob, os
 import numpy as np
 import matplotlib.pyplot as plt
 from natsort import natsort_keygen, ns
@@ -40,13 +44,9 @@ from skimage import measure
 import pandas as pd
 
 import tifffile as tiff
-import tkinter
-from tkinter import filedialog
-
 import torch
-from UNet_pytorch_online import *
 
-
+from layers.UNet_pytorch_online import *
 
 from functional.UNet_functions_PYTORCH import *
 from functional.matlab_crop_function import *
@@ -54,10 +54,11 @@ from functional.plot_functions_CLEANED import *
 from functional.data_functions_CLEANED import *
 from functional.data_functions_3D import *
 from functional.functions_cell_track_auto import *
+from functional.GUI import *
+
 from skimage.transform import rescale, resize, downscale_local_mean
 
 from plot_functions.PLOT_FIGURES_functions import *
-
 
 """ Define transforms"""
 torch.backends.cudnn.benchmark = True  
@@ -77,46 +78,6 @@ print(device)
 s_path = './(10) Checkpoints_full_auto_no_spatialW_large_TRACKER_CROP_PADS_NO_NEXT_only_check/'; next_bool = 0;
 
 
-
-
-# import PySimpleGUI as sg
-
-# sg.theme('DarkAmber')   # Add a touch of color
-# # All the stuff inside your window.
-# layout = [  [sg.Text('Some text on Row 1')],
-#             [sg.Text('Minimum size'), sg.InputText()],
-#             [sg.Text('Scale XY (um/px)'), sg.InputText()],
-#             [sg.Text('Scale Z (um/px)'), sg.InputText()],
-#             [sg.Text('Exclude cells on edge (# px)'), sg.InputText()],
-#             [sg.Button('Ok'), sg.Button('Cancel')] ]
-
-# # Create the Window
-# window = sg.Window('Choose input parameters', layout)
-# # Event Loop to process "events" and get the "values" of the inputs
-# while True:
-#     event, values = window.read()
-#     if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
-#         break
-#     print('You entered ', values[0])
-
-# window.close()
-
-
-# zz
-
-
-
-
-lowest_z_depth = 140;
-
-crop_size = 160; z_size = 32; num_truth_class = 2
-min_size = 10
-elim_size = 100; exclude_side_px = 40
-
-min_size = 100;  upper_thresh = 800;
-
-scale_xy = 0.83; scale_z = 3
-
 """ TO LOAD OLD CHECKPOINT """
 # Read in file names
 onlyfiles_check = glob.glob(os.path.join(s_path,'check_*'))
@@ -132,35 +93,33 @@ check = torch.load(s_path + checkpoint, map_location=device)
 tracker = check['tracker']
 mean_arr = tracker.mean_arr; std_arr = tracker.std_arr
 
-unet = check['model_type']; unet.load_state_dict(check['model_state_dict'])
+
+""" Initialize network """  
+kernel_size = 7
+pad = int((kernel_size - 1)/2)
+unet = UNet_online(in_channels=3, n_classes=2, depth=5, wf=4, kernel_size = kernel_size, padding= int((kernel_size - 1)/2), 
+                    batch_norm=True, batch_norm_switchable=False, up_mode='upsample')
+
+unet.load_state_dict(check['model_state_dict'])
 unet.to(device); unet.eval()
 
 
-""" Select multiple folders for analysis AND creates new subfolder for results output """
-root = tkinter.Tk()
-# get input folders
-another_folder = 'y';
-list_folder = []
-input_path = "./"
+""" Select multiple folders for analysis AND creates new subfolder for results output
+        ***also initialize variables
+"""
+list_folder, lowest_z_depth, exclude_side_px, min_size = track_CNN_GUI(default_z='120', default_edge='40', default_obj_size='100') 
 
-initial_dir = './'
-while(another_folder == 'y'):
-    input_path = filedialog.askdirectory(parent=root, initialdir= initial_dir,
-                                        title='Please select input directory')
-    input_path = input_path + '/'
-    
-    print('Do you want to select another folder? (y/n)')
-    another_folder = input();   # currently hangs forever
-    #another_folder = 'y';
+upper_thresh = 500;  lower_thresh = 400;
+lowest_z_extra = lowest_z_depth + 20;
+crop_size = 160; z_size = 32; 
+scale_xy = 0.83; scale_z = 3
 
-    list_folder.append(input_path)
-    initial_dir = input_path
         
 
 """ Loop through all the folders and do the analysis!!!"""   
 for input_path in list_folder:
     foldername = input_path.split('/')[-2]
-    sav_dir = input_path + '/' + foldername + '_output_FULL_AUTO_no_next_10_125762_TEST_8_INTENSITY'
+    sav_dir = input_path + '/' + foldername + '_output_Track_CNN'
 
     images = glob.glob(os.path.join(input_path,'*_input_im.tif'))    # can switch this to "*truth.tif" if there is no name for "input"
     images.sort(key=natsort_keygen(alg=ns.REAL))  # natural sorting
@@ -183,7 +142,7 @@ for input_path in list_folder:
     ### get Seg-CNN outputs
     seg_name = examples[0]['seg']  
     cur_seg = tiff.imread(seg_name)
-    cur_seg[lowest_z_depth:-1, ...] = 0   ### CLEAR EVERY CELL BELOW THIS DEPTH
+    cur_seg[lowest_z_extra:-1, ...] = 0   ### CLEAR EVERY CELL BELOW THIS DEPTH
     cur_seg = np.moveaxis(cur_seg, 0, -1)
     
     
@@ -227,7 +186,7 @@ for input_path in list_folder:
             
             seg_name = examples[frame_num]['seg']
             next_seg = tiff.imread(seg_name);
-            next_seg[lowest_z_depth:-1, ...] = 0   ### CLEAR EVERY CELL BELOW THIS DEPTH
+            next_seg[lowest_z_extra:-1, ...] = 0   ### CLEAR EVERY CELL BELOW THIS DEPTH
             next_seg = np.moveaxis(next_seg, 0, -1)
 
 
@@ -577,7 +536,7 @@ for input_path in list_folder:
             truth = 0
             if not truth:
                 truth_next_im = 0; truth_output_df = []; truth_array = [];
-            tracked_cells_df, truth_output_df, truth_next_im, truth_array = associate_remainder_as_new(tracked_cells_df, next_seg, frame_num, lowest_z_depth, z_size, next_input, min_size=new_min_size,
+            tracked_cells_df, truth_output_df, truth_next_im, truth_array = associate_remainder_as_new(tracked_cells_df, next_seg, frame_num, lowest_z_extra, z_size, next_input, min_size=new_min_size,
                                                                            truth=truth, truth_output_df=truth_output_df, truth_next_im=truth_next_im, truth_array=truth_array)
 
 
@@ -719,7 +678,7 @@ for input_path in list_folder:
         X_cur_cell = tracked_cells_df.iloc[idx].X
         Y_cur_cell = tracked_cells_df.iloc[idx].Y
 
-        if np.any(Z_cur_cell > lowest_z_depth - 20):
+        if np.any(Z_cur_cell > lowest_z_depth):
             tracked_cells_df = tracked_cells_df.drop(tracked_cells_df.index[idx])
             
             num_bottom += 1
@@ -738,7 +697,7 @@ for input_path in list_folder:
     """ Also remove by min_size 
                 ***ONLY IF SMALL WITHIN FIRST FEW FRAMES???    
     """
-    num_small = 0; real_saved = 0; upper_thresh = 500;  lower_thresh = 400; small_start = 0;
+    num_small = 0; real_saved = 0;  small_start = 0;
     for cell_num in np.unique(tracked_cells_df.SERIES):
                 
         idx = np.where(tracked_cells_df.SERIES == cell_num)
