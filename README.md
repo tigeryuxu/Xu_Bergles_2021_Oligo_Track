@@ -17,11 +17,9 @@ source venv/bin/activate
 
 - Windows:
 
-
-
 ```
-virtualenv -p python3.7 venv
-source venv/bin/activate
+python -m venv ./venv
+venv\Scripts\activate.ps1
 ```
 
 3. Install dependencies in virtualenv
