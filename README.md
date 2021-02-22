@@ -9,7 +9,7 @@ cd Xu_Bergles_2021_Oligo_Track
 
 2. Create virtual environment:
 
-	- Linux:
+- Linux:
 ```
 virtualenv -p python3.7 venv
 source venv/bin/activate
