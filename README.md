@@ -25,8 +25,8 @@ pip install natsort skimage tifffile tkinter pytorch
 
 
 ### Other requirements:
-* 1. GPU with at least 4 GB RAM
-* 2. CPU with at least 16 GB RAM
+1. GPU with at least 4 GB RAM
+2. CPU with at least 16 GB RAM
    
 ### Setup data for analysis:
 * overall, images should resemble input in the "demo data" folder
