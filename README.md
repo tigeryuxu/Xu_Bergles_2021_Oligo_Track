@@ -13,15 +13,15 @@ git clone https://github.com/yxu233/Xu_Bergles_2021_Oligo_Track.git
 cd Xu_Bergles_2021_Oligo_Track
 virtualenv -p python3.7 venv
 source venv/bin/activate
-pip install natsort skimage tifffile tkinter pytorch
+pip install numpy matplotlib natsort scikit-image tifffile pandas PySimpleGUI
 ```
 
 3. install Pytorch from https://pytorch.org/. Choose correct:
 	- version 1.71
 	- CUDA version that is compatible with GPU
 	- Proper operating system
-3. download checkpoint files from:  https://www.dropbox.com/sh/lzokf3sd0diuyn3/AABYV_oQxo0a-vAy_e_xIYEea?dl=0
-4. place checkpoint files into the 'Checkpoints' folder
+
+3. download checkpoint files from:  https://www.dropbox.com/sh/lzokf3sd0diuyn3/AABYV_oQxo0a-vAy_e_xIYEea?dl=0 and place the checkpoint files into the 'Checkpoints' folder
 
 
 ### Other requirements:
@@ -35,12 +35,21 @@ pip install natsort skimage tifffile tkinter pytorch
    
 ### Analysis pipeline overview:
 1. Run Seg_CNN_inference.py. Select input folders as indicated by GUI.
+```
+cd Oligo_Track
+python Seg_CNN_inference.py
+```
+
 2. Run Track_CNN_inference.py. The input folder for Track-CNN is the output folder of Seg-CNN.
+```
+python Track_CNN_inference.py
+```
 
 Note: Seg and Track CNN are run separately at this time to enable parallelization on separate computers as needed
 
 
 ### Demo run:
-1. Run Seg_CNN_inference.py and select the "demo data" folder as the input path
-2. After step 1 is done, run Track_CNN_inference.py and select the output folder from step 1 as the new input folder. 
+1. Download demo data from https://www.dropbox.com/sh/kebq4sypu6zkdrb/AAALicP6Ia4p8hLJ_3-1AbDaa?dl=0
+2. Run Seg_CNN_inference.py and select the "demo data" folder as the input path
+3. After step 1 is done, run Track_CNN_inference.py and select the output folder from step 1 as the new input folder. 
  
