@@ -4,22 +4,34 @@
 1. clone this git repo
 ```
 git clone https://github.com/yxu233/Xu_Bergles_2021_Oligo_Track.git
+cd Xu_Bergles_2021_Oligo_Track
 ```
 
-2. install dependencies in virtual environment:
+2. Create virtual environment:
+
+	- Linux:
 ```
-cd Xu_Bergles_2021_Oligo_Track
 virtualenv -p python3.7 venv
 source venv/bin/activate
+```
+	- Windows:
+
+```
+virtualenv -p python3.7 venv
+source venv/bin/activate
+```
+
+3. Install dependencies in virtualenv
+```
 pip install numpy matplotlib natsort scikit-image tifffile pandas PySimpleGUI sklearn progressbar2 seaborn
 ```
 
-3. install Pytorch from https://pytorch.org/. Choose correct:
+4. install Pytorch from https://pytorch.org/. Choose correct:
 	- version 1.71
 	- CUDA version that is compatible with GPU
 	- Proper operating system
 
-3. download checkpoint files from:  https://www.dropbox.com/sh/lzokf3sd0diuyn3/AABYV_oQxo0a-vAy_e_xIYEea?dl=0 and place the checkpoint files into the 'Checkpoints' folder
+5. download checkpoint files from:  https://www.dropbox.com/sh/lzokf3sd0diuyn3/AABYV_oQxo0a-vAy_e_xIYEea?dl=0 and place the checkpoint files into the 'Checkpoints' folder
 
 
 ### Other requirements:
