@@ -1,14 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Aug 27 10:25:37 2018
-
-@author: Tiger
-
-Things to add:
-    - GUI!!!
-    - need to detect directory change!!!
-
-
 Seg-CNN:
     Expected input:
         - series of Tiffs
@@ -20,32 +11,28 @@ Seg-CNN:
 
 """
 
-import glob, os
-""" check if on windows or linux """
-if os.name == 'posix':  platform = 'linux'
-elif os.name == 'nt': platform = 'windows'
-else:
-    platform = 0
-    
+import sys
+sys.path.insert(0, './layers')
 
+
+import glob, os
 import numpy as np
 import matplotlib.pyplot as plt
 from natsort import natsort_keygen, ns
 natsort_key1 = natsort_keygen(key = lambda y: y.lower())      # natural sorting order
-import tkinter
-from tkinter import filedialog
 
 import torch
-# from torch import nn
-
-from UNet_pytorch_online import *
+#from UNet_pytorch_online import *
 from tracker import *
 
 from functional.plot_functions_CLEANED import *
 from functional.data_functions_CLEANED import *
 from functional.data_functions_3D import *
 from functional.UNet_functions_PYTORCH import *
+from functional.GUI import *
 import tifffile as tiff
+
+from layers.UNet_pytorch_online import *
 
 from skimage.filters import threshold_otsu
 from skimage.filters import threshold_triangle
@@ -55,62 +42,13 @@ torch.backends.cudnn.enabled = True  # new thing? what do? must be True
 
 
 
-
-import PySimpleGUI as sg
-
-# sg.theme('DarkAmber')   # Add a touch of color
-# # All the stuff inside your window.
-# layout = [  [sg.Text('Some text on Row 1')],
-#             [sg.Text('SNR warning thresh (optional)'), sg.InputText()],
-#             [sg.Button('Select folder for analysis'), sg.Button('Cancel')] ]
-
-# # Create the Window
-# window = sg.Window('Window Title', layout)
-# # Event Loop to process "events" and get the "values" of the inputs
-# while True:
-#     event, values = window.read()
-#     if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
-#         break
-#     print('You entered ', values[0])
-
-
-#     if event == 'Select folder for analysis':
-
-#         """ Select multiple folders for analysis AND creates new subfolder for results output """
-#         root = tkinter.Tk()
-#         # get input folders
-#         another_folder = 'y';
-#         list_folder = []
-#         input_path = "./"
-        
-#         initial_dir = './'
-#         while(another_folder == 'y'):
-#             input_path = filedialog.askdirectory(parent=root, initialdir= initial_dir,
-#                                                 title='Please select input directory')
-#             input_path = input_path + '/'
-            
-#             print('Do you want to select another folder? (y/n)')
-#             another_folder = input();   # currently hangs forever
-#             #another_folder = 'y';
-        
-#             list_folder.append(input_path)
-#             initial_dir = input_path
-            
-            
-        
-#         window.close()
-        
-
-# zz
-
 """ Define GPU to use """
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 """  Network Begins: """
-s_path = './(19) Checkpoints_TITAN_NO_transforms_AdamW_batch_norm_CLEAN_DATA/'
-s_path = './(21) Checkpoints_PYTORCH_NO_transforms_AdamW_batch_norm_CLEAN_DATA_LARGE_NETWORK/'
-
+#s_path = './(21) Checkpoints_PYTORCH_NO_transforms_AdamW_batch_norm_CLEAN_DATA_LARGE_NETWORK/'
+s_path = './Checkpoints/'
 
 overlap_percent = 0.5
 input_size = 256
@@ -119,47 +57,37 @@ num_truth_class = 2
 
 """ TO LOAD OLD CHECKPOINT """
 # Read in file names
-onlyfiles_check = glob.glob(os.path.join(s_path,'check_*'))
+onlyfiles_check = glob.glob(os.path.join(s_path,'Seg_CNN_check_*'))
 onlyfiles_check.sort(key = natsort_key1)
       
 last_file = onlyfiles_check[-1]
 split = last_file.split('check_')[-1]
 num_check = split.split('.')
 checkpoint = num_check[0]
-checkpoint = 'check_' + checkpoint
+checkpoint = 'Seg_CNN_check_' + checkpoint
 check = torch.load(s_path + checkpoint, map_location=device)
 tracker = check['tracker']
 
-unet = check['model_type']; unet.load_state_dict(check['model_state_dict'])
+#unet = check['model_type']; 
+""" Initialize network """  
+kernel_size = 5
+pad = int((kernel_size - 1)/2)
+unet = UNet_online(in_channels=1, n_classes=2, depth=5, wf=4, kernel_size = kernel_size, padding= int((kernel_size - 1)/2), 
+                    batch_norm=True, batch_norm_switchable=False, up_mode='upsample')
+
+unet.load_state_dict(check['model_state_dict'])
 unet.to(device); unet.eval()
 print('parameters:', sum(param.numel() for param in unet.parameters()))
 
 
 """ Select multiple folders for analysis AND creates new subfolder for results output """
-root = tkinter.Tk()
-# get input folders
-another_folder = 'y';
-list_folder = []
-input_path = "./"
+list_folder = seg_CNN_GUI()
 
-initial_dir = './'
-while(another_folder == 'y'):
-    input_path = filedialog.askdirectory(parent=root, initialdir= initial_dir,
-                                        title='Please select input directory')
-    input_path = input_path + '/'
-    
-    print('Do you want to select another folder? (y/n)')
-    another_folder = input();   # currently hangs forever
-    #another_folder = 'y';
-
-    list_folder.append(input_path)
-    initial_dir = input_path
-        
 
 """ Loop through all the folders and do the analysis!!!"""
 for input_path in list_folder:
     foldername = input_path.split('/')[-2]
-    sav_dir = input_path + '/' + foldername + '_output_PYTORCH_RETRAINED_105834'
+    sav_dir = input_path + '/' + foldername + '_output_seg_CNN'
 
     """ For testing ILASTIK images """
     images = glob.glob(os.path.join(input_path,'*.tif'))    # can switch this to "*truth.tif" if there is no name for "input"
@@ -169,24 +97,13 @@ for input_path in list_folder:
     try:
         # Create target Directory
         os.mkdir(sav_dir)
-        print("Directory " , sav_dir ,  " Created ") 
+        print("\nSave directory " , sav_dir ,  " Created ") 
     except FileExistsError:
-        print("Directory " , sav_dir ,  " already exists")
+        print("\nSave directory " , sav_dir ,  " already exists")
         
     sav_dir = sav_dir + '/'
     
     # Required to initialize all
-    batch_size = 1;
-    
-    batch_x = []; batch_y = [];
-    weights = [];
-    
-    plot_jaccard = [];
-    
-    output_stack = [];
-    output_stack_masked = [];
-    all_PPV = [];
-    input_im_stack = [];
     for i in range(len(examples)):
          
     
