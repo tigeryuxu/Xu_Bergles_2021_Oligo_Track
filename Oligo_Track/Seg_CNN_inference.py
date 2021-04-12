@@ -16,6 +16,14 @@ sys.path.insert(0, './layers')
 
 
 import glob, os
+
+os_windows = 0
+if os.name == 'nt':  ## in Windows
+     os_windows = 1;
+     print('Detected Microsoft Windows OS')
+else: print('Detected non-Windows OS')
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from natsort import natsort_keygen, ns
@@ -23,7 +31,7 @@ natsort_key1 = natsort_keygen(key = lambda y: y.lower())      # natural sorting 
 
 import torch
 #from UNet_pytorch_online import *
-from tracker import *
+from layers.tracker import *
 
 from functional.plot_functions_CLEANED import *
 from functional.data_functions_CLEANED import *
@@ -160,7 +168,11 @@ for input_path in list_folder:
             filename = input_name.split('/')[-1].split('.')[0:-1]
             filename = '.'.join(filename)
             
-
+            ### if operating system is Windows, must also remove \\ slash
+            if os_windows:
+                 filename = filename.split('\\')[-1]
+                 
+                 
             segmentation = np.asarray(segmentation, np.uint8)
             tiff.imsave(sav_dir + filename + '_' + str(int(i)) +'_segmentation.tif', segmentation)
             segmentation[segmentation > 0] = 1

@@ -35,6 +35,15 @@ import sys
 sys.path.insert(0, './layers')
 
 import glob, os
+
+os_windows = 0
+if os.name == 'nt':  ## in Windows
+     os_windows = 1;
+     print('Detected Microsoft Windows OS')
+else: print('Detected non-Windows OS')
+
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from natsort import natsort_keygen, ns
@@ -760,6 +769,11 @@ for input_path in list_folder:
     filename = input_name.split('/')[-1]
     filename = filename.split('.')[0:-1]
     filename = '.'.join(filename)
+    
+    ### if operating system is Windows, must also remove \\ slash
+    if os_windows:
+         filename = filename.split('\\')[-1]
+                 
     
     for frame_num, im_dict in enumerate(examples):
          
