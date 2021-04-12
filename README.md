@@ -7,6 +7,7 @@ git clone https://github.com/yxu233/Xu_Bergles_2021_Oligo_Track.git
 cd Xu_Bergles_2021_Oligo_Track
 ```
 
+
 2. Create virtual environment:
 
 - Linux:
@@ -15,14 +16,14 @@ virtualenv -p python3.7 venv
 source venv/bin/activate
 ```
 
-- Windows:
-
+- Windows: (recommended download anaconda https://www.anaconda.com/products/individual#windows, and then use anaconda command prompt to make virtualenv)
 ```
-python -m venv ./venv
-venv\Scripts\activate.ps1
+conda update conda
+conda create -n venv python=3.7 anaconda
+conda activate venv
 ```
 
-3. Install dependencies in virtualenv
+3. Install dependencies:
 ```
 pip install numpy matplotlib natsort scikit-image tifffile pandas PySimpleGUI sklearn progressbar2 seaborn
 ```
@@ -45,7 +46,7 @@ pip install numpy matplotlib natsort scikit-image tifffile pandas PySimpleGUI sk
 * Each tiff stack must be single channel, grayscale, uint8 and named in ascending order of timeseries
    
 ### Analysis pipeline overview:
-1. Run Seg_CNN_inference.py. Select input folders as indicated by GUI.
+1. Run Seg_CNN_inference.py. Select input folders as indicated by GUI. (*remember to activate virtual environment as above)
 ```
 cd Oligo_Track
 python Seg_CNN_inference.py
