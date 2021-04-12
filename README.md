@@ -7,12 +7,15 @@ git clone https://github.com/yxu233/Xu_Bergles_2021_Oligo_Track.git
 cd Xu_Bergles_2021_Oligo_Track
 ```
 
-2. Install virtual environment:
+
+2. Create virtual environment:
+
 - Linux:
 ```
 virtualenv -p python3.7 venv
 source venv/bin/activate
 ```
+
 - Windows: (recommended download anaconda https://www.anaconda.com/products/individual#windows, and then use anaconda command prompt to make virtualenv)
 ```
 conda update conda
