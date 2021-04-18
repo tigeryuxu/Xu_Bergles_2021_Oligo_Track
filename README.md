@@ -33,7 +33,7 @@ pip install numpy matplotlib natsort scikit-image tifffile pandas PySimpleGUI sk
 	- CUDA version that is compatible with GPU
 	- Proper operating system
 
-5. download checkpoint files from:  https://www.dropbox.com/sh/lzokf3sd0diuyn3/AABYV_oQxo0a-vAy_e_xIYEea?dl=0 and place the checkpoint files into the 'Checkpoints' folder
+5. download checkpoint files from:  https://www.dropbox.com/sh/lzokf3sd0diuyn3/AABYV_oQxo0a-vAy_e_xIYEea?dl=0 and place the checkpoint files into the './Oligo_Track/Checkpoints' folder
 
 
 ### Other requirements:
