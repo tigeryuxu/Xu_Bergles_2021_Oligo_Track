@@ -137,7 +137,8 @@ for input_path in list_folder:
             
             if XY_scale != 1 or Z_scale != 1:
                 input_im = rescale(input_im, [Z_scale, XY_scale, XY_scale], anti_aliasing=True)   ### rescale the images
-
+                    
+                input_im = ((input_im - input_im.min()) * (1/(input_im.max() - input_im.min()) * 255)).astype('uint8')   ### rescale to 255
 
 
             """ Analyze each block with offset in all directions """
@@ -177,7 +178,7 @@ for input_path in list_folder:
             
         
             """ Start inference on volume """
-            print('\nStarting inference on volume: ' + str(i) + ' of total: ' + str(len(examples)))
+            print('\nStarting inference on volume: ' + str(i + 1) + ' of total: ' + str(len(examples)))
             segmentation = UNet_inference_by_subparts_PYTORCH(unet, device, input_im, overlap_percent, quad_size=input_size, quad_depth=depth,
                                                       mean_arr=tracker.mean_arr, std_arr=tracker.std_arr, num_truth_class=num_truth_class,
                                                       skip_top=1)
