@@ -44,6 +44,7 @@ from layers.UNet_pytorch_online import *
 
 from skimage.filters import threshold_otsu
 from skimage.filters import threshold_triangle
+from skimage.transform import rescale, resize, downscale_local_mean
 
 torch.backends.cudnn.benchmark = True  
 torch.backends.cudnn.enabled = True  # new thing? what do? must be True
@@ -62,6 +63,8 @@ overlap_percent = 0.5
 input_size = 256
 depth = 64
 num_truth_class = 2
+
+XY_expected = 0.83; Z_expected = 3;
 
 """ TO LOAD OLD CHECKPOINT """
 # Read in file names
@@ -89,8 +92,7 @@ print('parameters:', sum(param.numel() for param in unet.parameters()))
 
 
 """ Select multiple folders for analysis AND creates new subfolder for results output """
-list_folder = seg_CNN_GUI()
-
+list_folder, XY_res, Z_res = seg_CNN_GUI()
 
 """ Loop through all the folders and do the analysis!!!"""
 for input_path in list_folder:
@@ -114,14 +116,30 @@ for input_path in list_folder:
     # Required to initialize all
     for i in range(len(examples)):
          
-    
         
          """ TRY INFERENCE WITH PATCH-BASED analysis from TORCHIO """
          with torch.set_grad_enabled(False):  # saves GPU RAM            
             input_name = examples[i]['input']  
             input_im = tiff.imread(input_name)
 
-   
+
+
+            """ Scale images to default resolution if user resolution does not matching training """
+            XY_scale = float(XY_res)/XY_expected
+            if XY_scale < 1: print('Image XY resolution does not match training resolution, and will be downsampled by: ' + str(round(1/XY_scale, 2)))
+            elif  XY_scale > 1: print('Image XY resolution does not match training resolution, and will be upsampled by: ' + str(round(XY_scale, 2)))
+
+
+            Z_scale = float(Z_res)/Z_expected
+            if Z_scale < 1: print('Image Z resolution does not match training resolution, and will be downsampled by: ' + str(round(1/Z_scale, 2)))
+            elif  Z_scale > 1: print('Image Z resolution does not match training resolution, and will be upsampled by: ' + str(round(Z_scale, 2)))
+            
+            
+            if XY_scale != 1 or Z_scale != 1:
+                input_im = rescale(input_im, [Z_scale, XY_scale, XY_scale], anti_aliasing=True)   ### rescale the images
+
+
+
             """ Analyze each block with offset in all directions """
             ### CATCH error if too small volume, need to pad with zeros!!!
             if input_im.shape[0] < depth: pad_z = depth 

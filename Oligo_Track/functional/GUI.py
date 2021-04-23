@@ -16,10 +16,12 @@ else:
 
 
 
-def seg_CNN_GUI():
+def seg_CNN_GUI(default_XY='0.83', default_Z='3'):
     sg.theme('DarkAmber')   # Add a touch of color
     # All the stuff inside your window.
-    layout = [[sg.Text('SNR warning thresh (optional)'), sg.InputText()],
+    layout = [#[sg.Text('SNR warning thresh (optional)'), sg.InputText()],
+              [sg.Text('XY resolution (um/pixel)'), sg.InputText(default_XY)],
+              [sg.Text('Z resolution (um/pixel)'), sg.InputText(default_Z)],
               [sg.Button('Select input folder'), sg.Button('Cancel')]]
     
     # Create the Window
@@ -28,6 +30,12 @@ def seg_CNN_GUI():
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
         event, values = window.read()
+        
+        ### save user input values
+        XY_res = values[0]
+        Z_res = values[1]
+        
+        
         if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
             print('Exiting analysis')
             window.close()
@@ -76,7 +84,7 @@ def seg_CNN_GUI():
                 
             break
 
-    return list_folder
+    return list_folder, XY_res, Z_res
 
 
 """ GUI for track-CNN """
@@ -89,7 +97,7 @@ def track_CNN_GUI(default_z='120', default_edge='40', default_obj_size='100'):
               [sg.Button('Select input folder'), sg.Button('Cancel')]]
     
     # Create the Window
-    window = sg.Window('Seg_CNN input', layout)
+    window = sg.Window('Track_CNN input', layout)
     
     # Event Loop to process "events" and get the "values" of the inputs
     lowest_z_depth = []
