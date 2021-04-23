@@ -44,7 +44,7 @@ pip install numpy matplotlib natsort scikit-image tifffile pandas PySimpleGUI sk
 * overall, images should resemble input in the "demo data" folder.
 * Each timepoint should have corresponding individual multipage tiff stack
 * Each tiff stack must be single channel, grayscale, uint8 and named in ascending order of timeseries
-* Image pixel scale is VERY important! The expected scaling is: 0.83 um/px in XY and 3 um/px in Z. To avoid segmentation artifacts, please down- or up-sample your data appropriately to match this scaling.
+* Image pixel scale is VERY important! The expected scaling is: 0.83 um/px in XY and 3 um/px in Z. To avoid segmentation artifacts, please down- or up-sample your data appropriately to match this scaling. UPDATE: the pipeline now offers an automatic way to down- or up-sample your data. Simply input the original pixel resolution (um/px) of your data when prompted by the Seg-CNN GUI. This will be used to determine the amount of scaling needed. The output data will thus be scaled to 0.83 um/px in XY and 3 um/px in Z by the pipeline.
    
 ### Analysis pipeline overview:
 1. Run Seg_CNN_inference.py. Select input folders as indicated by GUI. (*remember to activate virtual environment as above)
