@@ -48,15 +48,18 @@ def seg_CNN_GUI(default_XY='0.83', default_Z='3'):
             """ Select multiple folders for analysis AND creates new subfolder for results output """
             another_folder = True
             list_folder = []
+            initial_dir = './'
             while another_folder:
                 root = tkinter.Tk()
                 # get input folders
                 
-                input_path = "./"; initial_dir = './'
+                input_path = "./"; 
             
                 input_path = filedialog.askdirectory(parent=root, initialdir= initial_dir,
                                                     title='Please select input directory')
                 input_path = input_path + '/'
+                
+                initial_dir = input_path
                 
                 print('\nSelected directory: ' + input_path)
     

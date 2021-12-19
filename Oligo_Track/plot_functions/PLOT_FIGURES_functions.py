@@ -356,11 +356,13 @@ def plot_pooled_trends(all_norm_tots, all_norm_new, ax_title_size, sav_dir, add_
     std_tots = std_tots[:max_week]
     sem_tots = sem_tots[:max_week]
     
-    
-    width = 0.35       # the width of the bars: can also be len(x) sequence
     plt.figure(figsize=(5.5,4))
     p1 = plt.bar(np.arange(len(mean_tots)), mean_tots, yerr=0, color='k')
-    plt.errorbar(np.arange(len(mean_tots)), mean_tots, yerr=sem_tots, color='r', fmt='none', capsize=1, capthick=1)
+    if len(all_norm_tots) > 1:   ### only add error bars if there's more than 1 set of values
+        width = 0.35       # the width of the bars: can also be len(x) sequence
+        
+        
+        plt.errorbar(np.arange(len(mean_tots)), mean_tots, yerr=sem_tots, color='r', fmt='none', capsize=1, capthick=1)
     
     """ Plot new green on top """
     mean, std, sem = balance_find_mean_std_sem(all_norm_new)
@@ -368,20 +370,22 @@ def plot_pooled_trends(all_norm_tots, all_norm_new, ax_title_size, sav_dir, add_
     mean = mean[:max_week]
     std = std[:max_week]
     sem = sem[:max_week]
-
     p2 = plt.bar(np.arange(len(mean)), mean, bottom=mean_tots, yerr=0, color='g')
-    plt.errorbar(np.arange(len(mean)), mean + mean_tots, yerr=sem, color='r', fmt='none', capsize=1, capthick=1)
     
+    if len(all_norm_tots) > 1:   ### only add error bars if there's more than 1 set of values
+        
+        plt.errorbar(np.arange(len(mean)), mean + mean_tots, yerr=sem, color='r', fmt='none', capsize=1, capthick=1)
+        
     
-    line = np.arange(-5, len(mean) + 5, 1)
-    plt.plot(line, np.ones(len(line)) * 0.5, 'r--', linewidth=2, markersize=10)
+    #line = np.arange(-5, len(mean) + 5, 1)
+    #plt.plot(line, np.ones(len(line)) * 1, 'r--', linewidth=2, markersize=10)
     
     plt.ylabel('Proportion of cells', fontsize=ax_title_size)
     plt.xlabel('Weeks', fontsize=16); 
     plt.xticks(np.arange(0, len(mean), 1))
     plt.xlim(-1, len(mean))
-    plt.ylim(0, 1.4)
-    plt.yticks(np.arange(0, 1.5, 0.2))
+    plt.ylim([0, 2.5])
+    plt.yticks(np.arange(0, 2.6, 0.5))
     #plt.legend((p1[0], p2[0]), ('Baseline', 'New cells'), fontsize=leg_size)
     ax = plt.gca()
     rs = ax.spines["right"]; rs.set_visible(False); ts = ax.spines["top"]; ts.set_visible(False)
@@ -910,12 +914,18 @@ def plot_DENSITY_VOLUME_GRAPHS(all_total_dists, all_total_vols, all_total_z, all
     plt.close('all')
     z_thresh = 300
     x_lim = 301
+    y_lim = 200  #normally 200
     
     """ Plot density of NEW cells """
     for idx, total_dists in enumerate(all_total_dists):
         
         total_z = all_total_z[idx]
         new_z = all_new_z[idx]
+        
+        ### if no cells in current frame, then skip that week
+        if len(new_z) == 0:
+            continue
+        
         
         new_dists = all_new_dists[idx]
         
@@ -927,10 +937,10 @@ def plot_DENSITY_VOLUME_GRAPHS(all_total_dists, all_total_vols, all_total_z, all
         plt.xlabel('Depth (\u03bcm)', fontsize=ax_title_size); plt.ylabel('Sparsity (\u03bcm)', fontsize=ax_title_size)
         plt.title('Week ' + str(idx), fontsize=ax_title_size) 
         rs = ax.spines["right"]; rs.set_visible(False); ts = ax.spines["top"]; ts.set_visible(False)
-        plt.xlim(0, x_lim); plt.ylim(0, 200) 
+        plt.xlim(0, x_lim); plt.ylim(0, y_lim) 
         #ax.legend(['stable', 'new'], fontsize=leg_size, frameon=False, loc='upper right')
         
-        lgnd = plt.legend(['stable', 'new'], fontsize=leg_size, frameon=False, loc='lower left')
+        lgnd = plt.legend(['stable', 'new'], fontsize=leg_size, frameon=False, loc='upper right')
         lgnd.legendHandles[0]._sizes = [40]
         lgnd.legendHandles[1]._sizes = [40]
             
@@ -945,7 +955,10 @@ def plot_DENSITY_VOLUME_GRAPHS(all_total_dists, all_total_vols, all_total_z, all
         total_z = all_total_z[idx]
         term_z = all_term_z[idx]
         
-       
+        ### if no cells in current frame, then skip that week
+        if len(term_z) == 0:
+            continue
+               
         
         term_dists = all_term_dists[idx]       
        
@@ -957,7 +970,7 @@ def plot_DENSITY_VOLUME_GRAPHS(all_total_dists, all_total_vols, all_total_z, all
         plt.xlabel('Depth (\u03bcm)', fontsize=ax_title_size); plt.ylabel('Sparsity (\u03bcm)', fontsize=ax_title_size)
         plt.title('Week ' + str(idx), fontsize=ax_title_size) 
         rs = ax.spines["right"]; rs.set_visible(False); ts = ax.spines["top"]; ts.set_visible(False)
-        plt.xlim(0, x_lim); plt.ylim(0, 200)
+        plt.xlim(0, x_lim); plt.ylim(0, y_lim)
         lgnd = plt.legend(['stable', 'dying'], fontsize=leg_size, frameon=False, loc='lower left')
         lgnd.legendHandles[0]._sizes = [40]
         if len(term_z) > 0:
@@ -975,6 +988,11 @@ def plot_DENSITY_VOLUME_GRAPHS(all_total_dists, all_total_vols, all_total_z, all
         new_z = all_new_z[idx]
         
         new_vols = all_new_vol[idx]
+
+        ### if no cells in current frame, then skip that week
+        if len(new_z) == 0:
+            continue
+        
         
         
         plt.figure(neighbors * 100 + idx, figsize=figsize); 
@@ -999,6 +1017,12 @@ def plot_DENSITY_VOLUME_GRAPHS(all_total_dists, all_total_vols, all_total_z, all
         total_z = all_total_z[idx]
         term_z = all_term_z[idx]
         
+
+        ### if no cells in current frame, then skip that week
+        if len(term_z) == 0:
+            continue
+               
+
         term_vols = all_term_vol[idx]  
         
         
@@ -1022,3 +1046,126 @@ def plot_DENSITY_VOLUME_GRAPHS(all_total_dists, all_total_vols, all_total_z, all
 
 
     return all_total_dists, all_total_z, all_new_dists, all_term_dists, all_new_vol, all_term_vol, all_new_z, all_term_z
+
+
+
+
+
+# """ Pooled for control as all timepoints are equivalent """
+# def plot_DENSITY_VOLUME_GRAPHS(all_total_dists, all_total_vols, all_total_z, all_new_dists, all_term_dists, all_new_vol, all_term_vol, all_new_z, all_term_z, sav_dir, neighbors, ax_title_size, leg_size, name = '', figsize=(6,5)):
+#     plt.close('all')
+#     z_thresh = 300
+#     x_lim = 301
+    
+    
+#     total_dists_vec = np.concatenate(all_total_dists).ravel()
+    
+#     total_z_vec = np.concatenate(all_total_z).ravel()
+    
+#     new_z_vec = np.concatenate(all_new_z).ravel()
+#     new_dists_vec = np.concatenate(all_new_dists).ravel()
+    
+        
+
+#     plt.figure(neighbors, figsize=figsize); 
+#     ax = plt.gca()
+#     plt.scatter(total_z_vec[np.where(total_z_vec < z_thresh)], total_dists_vec[np.where(total_z_vec < z_thresh)], s=5, marker='o', color='k');
+#     plt.scatter(new_z_vec[np.where(new_z_vec < z_thresh)], new_dists_vec[np.where(new_z_vec < z_thresh)], s=8, marker='o', color='limegreen');
+#     plt.xlabel('Depth (\u03bcm)', fontsize=ax_title_size); plt.ylabel('Sparsity (\u03bcm)', fontsize=ax_title_size)
+#     plt.title('COMBINED ', fontsize=ax_title_size) 
+#     rs = ax.spines["right"]; rs.set_visible(False); ts = ax.spines["top"]; ts.set_visible(False)
+#     plt.xlim(0, x_lim); plt.ylim(0, 200) 
+#     #ax.legend(['stable', 'new'], fontsize=leg_size, frameon=False, loc='upper right')
+    
+#     lgnd = plt.legend(['stable', 'new'], fontsize=leg_size, frameon=False, loc='upper right')
+#     lgnd.legendHandles[0]._sizes = [40]
+#     lgnd.legendHandles[1]._sizes = [40]
+        
+#     plt.tight_layout()
+#     plt.savefig(sav_dir + name + '_DENSITY_new_' + str(neighbors) + '.png')     
+
+    
+        
+#     """ Plt density of TERMINATED cells vs. depth """
+#     for idx, total_dists in enumerate(all_total_dists):
+       
+#         total_z = all_total_z[idx]
+#         term_z = all_term_z[idx]
+        
+       
+        
+#         term_dists = all_term_dists[idx]       
+       
+#         plt.figure(neighbors * 10 + idx, figsize=figsize); 
+#         ax = plt.gca()
+#         plt.scatter(total_z[np.where(total_z < z_thresh)], total_dists[np.where(total_z < z_thresh)], s=5, marker='o', color='k');
+#         if len(term_z) > 0:
+#              plt.scatter(term_z[np.where(term_z < z_thresh)], term_dists[np.where(term_z < z_thresh)], s=8, marker='o', color='r');
+#         plt.xlabel('Depth (\u03bcm)', fontsize=ax_title_size); plt.ylabel('Sparsity (\u03bcm)', fontsize=ax_title_size)
+#         plt.title('Week ' + str(idx), fontsize=ax_title_size) 
+#         rs = ax.spines["right"]; rs.set_visible(False); ts = ax.spines["top"]; ts.set_visible(False)
+#         plt.xlim(0, x_lim); plt.ylim(0, 200)
+#         lgnd = plt.legend(['stable', 'dying'], fontsize=leg_size, frameon=False, loc='lower left')
+#         lgnd.legendHandles[0]._sizes = [40]
+#         if len(term_z) > 0:
+#             lgnd.legendHandles[1]._sizes = [40]
+        
+#         plt.tight_layout()
+#         plt.savefig(sav_dir +  name + '_DENSITY_term_' + str(neighbors + idx) + '.png')              
+
+  
+
+#     """ Plt VOLUME of NEW cells vs. depth """
+#     for idx, total_vols in enumerate(all_total_vols):
+ 
+#         total_z = all_total_z[idx]
+#         new_z = all_new_z[idx]
+        
+#         new_vols = all_new_vol[idx]
+        
+        
+#         plt.figure(neighbors * 100 + idx, figsize=figsize); 
+#         ax = plt.gca()
+#         plt.scatter(total_z[np.where(total_z < z_thresh)], total_vols[np.where(total_z < z_thresh)], s=5, marker='o', color='k');
+#         plt.scatter(new_z[np.where(new_z < z_thresh)], new_vols[np.where(new_z < z_thresh)], s=8, marker='o', color='limegreen');
+#         plt.xlabel('Depth (\u03bcm)', fontsize=ax_title_size); plt.ylabel('Soma volume ($\u03bcm^3$)', fontsize=ax_title_size)
+#         plt.title('Week ' + str(idx), fontsize=ax_title_size) 
+#         rs = ax.spines["right"]; rs.set_visible(False); ts = ax.spines["top"]; ts.set_visible(False)
+#         plt.xlim(0, x_lim); plt.ylim(30, 10000)
+#         lgnd = plt.legend(['stable', 'new'], fontsize=leg_size, frameon=False, loc='upper right')    
+#         lgnd.legendHandles[0]._sizes = [40]
+#         lgnd.legendHandles[1]._sizes = [40]
+        
+#         plt.tight_layout()
+#         plt.savefig(sav_dir +  name + '_VOLUME_new_' + str(neighbors + idx) + '.png')                
+    
+
+#     """ Plt VOLUME of TERMINATED cells vs. depth """
+#     for idx, total_vols in enumerate(all_total_vols):
+
+#         total_z = all_total_z[idx]
+#         term_z = all_term_z[idx]
+        
+#         term_vols = all_term_vol[idx]  
+        
+        
+#         plt.figure(neighbors * 1000 + idx, figsize=figsize); 
+#         ax = plt.gca()
+#         plt.scatter(total_z[np.where(total_z < z_thresh)], total_vols[np.where(total_z < z_thresh)], s=5, marker='o', color='k');
+#         if len(term_z) > 0:
+#             plt.scatter(term_z[np.where(term_z < z_thresh)], term_vols[np.where(term_z < z_thresh)], s=8, marker='o', color='r');
+#         plt.xlabel('Depth (\u03bcm)', fontsize=ax_title_size); plt.ylabel('Soma volume ($\u03bcm^3$)', fontsize=ax_title_size)
+#         plt.title('Week ' + str(idx), fontsize=ax_title_size) 
+#         rs = ax.spines["right"]; rs.set_visible(False); ts = ax.spines["top"]; ts.set_visible(False)
+#         lgnd = plt.legend(['stable', 'dying'], fontsize=leg_size, frameon=False, loc='upper right')
+#         lgnd.legendHandles[0]._sizes = [40]
+#         if len(term_z) > 0:
+#             lgnd.legendHandles[1]._sizes = [40]
+        
+#         plt.xlim(0, x_lim); plt.ylim(30, 8000)
+#         plt.tight_layout()
+#         plt.savefig(sav_dir +  name + '_VOLUME_term_' + str(neighbors + idx) + '.png')              
+
+
+
+#     return all_total_dists, all_total_z, all_new_dists, all_term_dists, all_new_vol, all_term_vol, all_new_z, all_term_z

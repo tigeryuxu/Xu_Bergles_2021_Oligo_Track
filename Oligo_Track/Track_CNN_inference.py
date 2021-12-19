@@ -652,9 +652,12 @@ for input_path in list_folder:
     
     """ Pre-save everything """
     tracked_cells_df = tracked_cells_df.sort_values(by=['SERIES', 'FRAME'])
-    # tracked_cells_df.to_csv(sav_dir + 'tracked_cells_df_RAW.csv', index=False)
+    #tracked_cells_df.to_csv(sav_dir + 'tracked_cells_df_RAW.csv', index=False)
     
-    # tracked_cells_df.to_pickle(sav_dir + 'tracked_cells_df_RAW_pickle.pkl')
+    tracked_cells_df.to_pickle(sav_dir + 'tracked_cells_df_RAW_pickle.pkl')
+    tmp = np.copy(tracked_cells_df)
+    #tracked_cells_df = pd.read_pickle(sav_dir + 'tracked_cells_df_RAW_pickle.pkl')
+    
 
     ### (2) remove everything only on a single frame, except for very first frame
     singles = []
@@ -780,11 +783,14 @@ for input_path in list_folder:
             output_frame = gen_im_frame_from_array(tracked_cells_df, frame_num=frame_num, input_im=input_im)
             im = convert_matrix_to_multipage_tiff(output_frame)
             tiff.imsave(sav_dir + filename + '_' + str(frame_num) + '_output_CLEANED.tif', np.asarray(im, dtype=np.uint16))
-        
 
-            # output_frame = gen_im_new_term_from_array(tracked_cells_df, frame_num=frame_num, input_im=input_im, new=1)
-            # im = convert_matrix_to_multipage_tiff(output_frame)
-            # tiff.imsave(sav_dir + filename + '_' + str(frame_num) + '_output_NEW.tif', im)
+            output_frame = gen_im_new_term_from_array(tracked_cells_df, frame_num=frame_num, input_im=input_im, new=0)
+            im = convert_matrix_to_multipage_tiff(output_frame)
+            imsave(sav_dir + filename + '_' + str(frame_num) + '_output_TERM.tif', im)
+
+            output_frame = gen_im_new_term_from_array(tracked_cells_df, frame_num=frame_num, input_im=input_im, new=1)
+            im = convert_matrix_to_multipage_tiff(output_frame)
+            tiff.imsave(sav_dir + filename + '_' + str(frame_num) + '_output_NEW.tif', im)
             
 
     

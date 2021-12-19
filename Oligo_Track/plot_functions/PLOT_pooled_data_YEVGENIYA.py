@@ -26,19 +26,17 @@ import tkinter
 from tkinter import filedialog
 
 
-
 import os, sys
 currentdir = os.path.dirname(os.path.realpath('./plot_functions'))
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 
-#from matlab_crop_function import *
+
 from functional.matlab_crop_function import *
 from functional.plot_functions_CLEANED import *
 from functional.data_functions_CLEANED import *
 from functional.data_functions_3D import *
 from functional.functions_cell_track_auto import *
-
 from skimage.transform import rescale, resize, downscale_local_mean
 
 
@@ -51,17 +49,18 @@ import seaborn as sns
 
 
 
-control = 1;
+control = 0;
 
 if control:
     lowest_z_depth = 120;
 else:
-    lowest_z_depth = 160;
+    lowest_z_depth = 120;
+    #lowest_z_depth = 160;
     
 crop_size = 160
 z_size = 32
 num_truth_class = 2
-min_size = 10
+#min_size = 10
 both = 0
 
 
@@ -74,7 +73,7 @@ truth = 1
 
 exclude_side_px = 40
 
-min_size = 100;
+min_size = 150;
 upper_thresh = 800;
 
 
@@ -122,7 +121,7 @@ for fold_idx, input_path in enumerate(list_folder):
     foldername = input_path.split('/')[-2]
     #sav_dir = input_path + '/' + foldername + '_output_FULL_AUTO_no_next_10_125762_TEST_6'
 
-    sav_dir = input_path + '/' + foldername + '_output_FULL_AUTO_no_next_10_125762_TEST_8_INTENSITY'
+    sav_dir = input_path + '/' + foldername + '_output_Track_CNN'
 
 
 
@@ -212,10 +211,17 @@ for fold_idx, input_path in enumerate(list_folder):
         small_bool = 0;
         for iter_idx, cell_obj in enumerate(tracked_cells_df.iloc[idx].coords):
             
+            ### exception, spare if large cell within first frame
+            # if len(cell_obj) > upper_thresh and iter_idx < 1:
+            #     small_bool = 0
+            #     real_saved += 1
+            #     break;
+                
             
             start_frame = np.asarray(tracked_cells_df.iloc[idx].FRAME)[0]
             
             if len(cell_obj) < min_size:  
+                print(len(cell_obj))
                 small_bool = 1
 
 
@@ -224,11 +230,7 @@ for fold_idx, input_path in enumerate(list_folder):
                 small_bool = 1
                 small_start += 1
             
-            ### exception, spare if large cell within first frame
-            if len(cell_obj) > upper_thresh and iter_idx < 1:  
-                small_bool = 0
-                real_saved += 1
-                break;
+
         
         if small_bool:
             tracked_cells_df = tracked_cells_df.drop(tracked_cells_df.index[idx])   ### DROPS ENTIRE CELL SERIES
@@ -254,9 +256,9 @@ for fold_idx, input_path in enumerate(list_folder):
           # imsave(sav_dir + filename + '_' + str(frame_num) + '_output_COLOR.tif', im)
 
 
-            # output_frame = gen_im_new_term_from_array(tracked_cells_df, frame_num=frame_num, input_im=input_im, new=0)
-            # im = convert_matrix_to_multipage_tiff(output_frame)
-            # imsave(sav_dir + filename + '_' + str(frame_num) + '_output_TERMINATED.tif', im)
+            output_frame = gen_im_new_term_from_array(tracked_cells_df, frame_num=frame_num, input_im=input_im, new=0)
+            im = convert_matrix_to_multipage_tiff(output_frame)
+            imsave(sav_dir + filename + '_' + str(frame_num) + '_output_TERMINATED.tif', im)
 
 
             output_frame = gen_im_new_term_from_array(tracked_cells_df, frame_num=frame_num, input_im=input_im, new=1)
@@ -294,185 +296,115 @@ for fold_idx, input_path in enumerate(list_folder):
 
             
                 
-    """ If filename contains 235 or 246, then must +1 to timeframes after baseline, because week 2 skipped """
-    if '235' in foldername:
-        
-        for idx in range(len(tracked_cells_df)):
-            
-            cell = tracked_cells_df.iloc[idx]
-            if cell.FRAME >= 1:
-                new_val = cell.FRAME + 1
-                cell.FRAME = new_val
-                tracked_cells_df.iloc[idx] = cell
-            
-    if '264' in foldername:
-        
-        for idx in range(len(tracked_cells_df)):
-            
-            cell = tracked_cells_df.iloc[idx]
-            if cell.FRAME >= 0:
-                new_val = cell.FRAME + 3
-                cell.FRAME = new_val
-                tracked_cells_df.iloc[idx] = cell
-            
-
-
-
-
-    """ Normalize to 0 um using vertices """
-    
-    if '235' in foldername:
+    """ For Yevgeniya's data """
+    if 'A13R1' in foldername:
         x_0 = 0; y_lim = height_tmp
         y_0 = 0; x_lim = width_tmp
-        z_0 = 0; z_y = 27 - 2  ### upper right corner, y=0
-        z_x = 0; z_xy = 31 - 2
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)
-        
-        
-        
-        two_thirty_tracked = tracked_cells_df.copy()
-        mesh_235 = np.copy(mesh)
-        
-
-    elif '037' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        z_0 = 18 - 0; z_y = 18 - 0   ### upper right corner, y=0
-        z_x = 2 - 0; z_xy = 7 - 0
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)    
-
-    elif '030' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        
-        z_0 = 16 + 2; z_y = 30 + 2   ### upper right corner, y=0
-        z_x = 6 + 2; z_xy = 26 + 2
-
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)  
-        
-        folder_pools[fold_idx] = 1;   ### TO POOL LATER
-
-    elif '033' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        
-        z_0 = 12 - 0; z_y = 21 - 0   ### upper right corner, y=0
-        z_x = 5 - 0; z_xy = 16 - 0
-
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)    
-
-        folder_pools[fold_idx] = 1;   ### TO POOL LATER
-
-    elif '097' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        
-        z_0 = 10 + 1; z_y = 19 + 1   ### upper right corner, y=0
-        z_x = 2 + 1; z_xy = 10 + 1
-
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)   
-        
-        folder_pools[fold_idx] = 2;   ### TO POOL LATER
-
-    elif '099' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        
-        z_0 = 0 + 3; z_y = 15 + 3   ### upper right corner, y=0
-        z_x = 0 + 3; z_xy = 15 + 3
-
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)  
-        
-        folder_pools[fold_idx] = 2;   ### TO POOL LATER
-        
-        
-        
-        
-        
-        
-    """ 
-        Normalize for control experiments
-    
-    """
-    if '056' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        z_0 = 10 + 3; z_y = 12 + 3  ### upper right corner, y=0
-        z_x = 4 + 3; z_xy = 8 + 3
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)
-        
-        control = 1;       
-        
-
-    elif '264' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        z_0 = 5 + 6; z_y = 48 + 6   ### upper right corner, y=0
-        z_x = 0 + 6; z_xy = 32 + 6
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)        
-        
-        control = 1;     
-    
-        ### pool 1
-    elif '089' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        z_0 = 2 + 3; z_y = 2 + 3   ### upper right corner, y=0
-        z_x = 2 + 3; z_xy = 2 + 3
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)       
-        
-        folder_pools[fold_idx] = 1
-        
-        control = 1;     
-        
-    elif '115' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        z_0 = 11; z_y = 7   ### upper right corner, y=0
-        z_x = 2; z_xy = 6
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)       
-        
-        control = 1;     
-        
-        folder_pools[fold_idx] = 1
-        
-    elif '186' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        z_0 = 5 + 3; z_y = 5 + 3  ### upper right corner, y=0
-        z_x = 5 + 3; z_xy = 5 + 3
+        z_0 = 35; z_y = 45   ### upper right corner, y=0
+        z_x = -2; z_xy = 26
         mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)    
         
-        control = 1;     
-        folder_pools[fold_idx] = 1
-        
-        
-        ### pool 2
-    elif '385' in foldername:
-        x_0 = 0; y_lim = height_tmp
-        y_0 = 0; x_lim = width_tmp
-        z_0 = 4; z_y = 11   ### upper right corner, y=0
-        z_x = 4; z_xy = 11
-        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)    
-        
-        control = 1;     
+        control = 0;     
         folder_pools[fold_idx] = 0
         
-    elif '420' in foldername:
+    elif 'A13R2' in foldername:
         x_0 = 0; y_lim = height_tmp
         y_0 = 0; x_lim = width_tmp
-        z_0 = 4 + 2; z_y = 6 + 2   ### upper right corner, y=0
-        z_x = 4 + 2; z_xy = 6 + 2
+        z_0 = 20; z_y = 28   ### upper right corner, y=0
+        z_x = 2; z_xy = 6
         mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)    
         
-        control = 1;     
-        folder_pools[fold_idx] = 2
+        control = 0;     
+        folder_pools[fold_idx] = 0
+
         
+    elif 'A13R3' in foldername:
+        x_0 = 0; y_lim = height_tmp
+        y_0 = 0; x_lim = width_tmp
+        z_0 = 27; z_y = 34   ### upper right corner, y=0
+        z_x = 2; z_xy = 8
+        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)    
+        
+        control = 0;     
+        folder_pools[fold_idx] = 0            
+        
+
+    elif 'A9R4' in foldername:
+        x_0 = 0; y_lim = height_tmp
+        y_0 = 0; x_lim = width_tmp
+        z_0 = 4; z_y = 8   ### upper right corner, y=0
+        z_x = -4; z_xy = -2
+        mesh = points_to_mesh(x_0, x_lim, y_0, y_lim, z_0, z_y, z_x, z_xy)    
+        
+        control = 0;     
+        folder_pools[fold_idx] = 0            
+        
+
+
+
+    """ Create mesh properly """
+    # m = np.max(input_im, axis=-1)
+    
+    # m = np.zeros(np.shape(input_im))
+    
+    # #m = np.copy(input_im)
+    # print('scaling cell Z to mesh')
+    # for idx in range(len(tracked_cells_df)):
+        
+    #     cell = tracked_cells_df.iloc[idx]
+    
+    #     x = cell.X
+    #     y = cell.Y
+    #     z = cell.Z
+        
+        
+    #     ### ENSURE ORDER OF XY IS CORRECT HERE!!!
+    #     scale = mesh[int(y), int(x)]
+    
+    #     new_z = z - scale
+        
+        
+    #     if z < scale and cell.FRAME == 0:
+    #         print(z)
+        
+            
+    #         ### DEBUG
+    #         m[int(y), int(x), int(z)] = 255
+    #         #cell.Z = new_z
+    #         print(new_z)
+        
+    #     #tracked_cells_df.iloc[idx] = cell
+
+
+    import napari
+    #viewer = napari.view_image(input_im)
+    #viewer.add_image(m, colormap='red')
+
+
+    mesh_3D = np.zeros(np.shape(input_im))
+    
+    #m = np.copy(input_im)
+    print('scaling cell Z to mesh')
+    for x_id in range(len(mesh[:, 0])):
+         for y_id in range(len(mesh[0, :])):
+            
+            z_val = mesh[x_id, y_id]               
+        
+            mesh_3D[x_id, y_id, 0:int(z_val)] = 1
+            
+
+    import napari
+    viewer = napari.view_image(input_im)
+    viewer.add_image(mesh_3D, colormap='red')
+
+
+
+
         
         
         
     """ Scale Z to mesh """
-    #m = np.max(input_im, axis=-1)
+    m = np.max(input_im, axis=-1)
     print('scaling cell Z to mesh')
     for idx in range(len(tracked_cells_df)):
         
@@ -489,11 +421,12 @@ for fold_idx, input_path in enumerate(list_folder):
         new_z = z - scale
         
         ### DEBUG
-        #m[int(y), int(x)] = 0
+        m[int(y), int(x)] = 0
         cell.Z = new_z
-    
+        
         tracked_cells_df.iloc[idx] = cell
-
+        
+   
 
     """ Set globally """
     plt.rc('xtick',labelsize=16)
@@ -526,7 +459,7 @@ for fold_idx, input_path in enumerate(list_folder):
 
 
 if not control:
-    sav_dir = './OUTPUT_plots_pooled_data_0/'
+    sav_dir = './OUTPUT_plots_pooled_data_0_A9R4/'
     try:
         # Create target Directory
         os.mkdir(sav_dir)
@@ -590,7 +523,7 @@ def pool_lists(all_norm_tots, folder_pools):
             
     return pooled_lists
 
-
+zzz
 all_norm_tots = pool_lists(all_norm_tots, folder_pools)
 all_norm_new = pool_lists(all_norm_new, folder_pools)
 all_norm_t32 = pool_lists(all_norm_t32, folder_pools)
@@ -630,7 +563,7 @@ lens = [];
 for row in all_norm_n165: lens.append(len(row))
 
 if not control:
-    max_week = np.max(lens) - 2  ### stop at week 12
+    max_week = np.max(lens)  ### stop at week 12
 else:
     max_week = np.max(lens)
 
@@ -647,22 +580,26 @@ plot_pooled_trends(all_norm_t165, all_norm_n165, ax_title_size, sav_dir, add_nam
 """ Pool all tracked_cells_df and add np.max() so series numbers don't overlap! """
 if control:
     #scales = [5.5, 10.6, 9.3, 10.64, 8.7, 11.6]
-    scales = [6.74, 11.12, 9.43, 11.12, 9, 11.83]
+    #scales = [6.74, 11.12, 9.43, 11.12, 9, 11.83]
     
     
-    scales = [6.311, 9.6, 8.87, 7.59, 10.9]
+    #scales = [6.311, 9.6, 8.87, 7.59, 10.9]
+    scales = [1, 1, 1,1 ,1, 1, 1, 1]
     
 else:
     #scales = [11.12, 13.92, 11.42, 7.41, 17.6, 17.25]
-    scales = [10, 13.67, 12.23, 7.9, 15.16, 15.53]
+    #scales = [10, 13.67, 12.23, 7.9, 15.16, 15.53]
     
-    scales = [11.25, 13.7, 12.3, 7.76, 16.36, 15.46]
+    #scales = [11.25, 13.7, 12.3, 7.76, 16.36, 15.46]
+    
+    
+    scales = [1, 1, 1,1 ,1, 1, 1, 1]
     
     
     
     
 
-""" Pool all tracked_cells_df and add np.max() so series numbers don't overlap! """
+# """ Pool all tracked_cells_df and add np.max() so series numbers don't overlap! """
 pooled_tracks = all_tracked_cells_df[0]
 pooled_tracks['scale'] = scales[0]
 for idx, tracks in enumerate(all_tracked_cells_df):
@@ -679,11 +616,13 @@ for idx, tracks in enumerate(all_tracked_cells_df):
     
 tracked_cells_df = pooled_tracks
 
+
+
 """ Save pooled: """
 if not control:
     tracked_cells_df.to_pickle(sav_dir + 'tracked_cells_df_POOLED_CLEANED.pkl')
 else:
-    tracked_cells_df.to_pickle(sav_dir + 'tracked_cells_df_CONTROL_POOLED_RERUN_FOR_YEV.pkl')
+    tracked_cells_df.to_pickle(sav_dir + 'tracked_cells_df_CONTROL_POOLED_YEV_checking.pkl')
 
 
 if control:
@@ -730,7 +669,6 @@ if analyze == 1:
         total_dists, total_vols, total_z, new_dists, term_dists, new_vol, term_vol, new_z, term_z, new_EXCLUDE, new_EXCLUDE_z, term_EXCLUDE, term_EXCLUDE_z = plot_density_and_volume(tracked, new_cells_per_frame, terminated_cells_per_frame, scale_xy, scale_z, sav_dir, neighbors, ax_title_size, leg_size, scaled_vol=scaled_vol, plot=0)
 
 
-
         ### initialize if first time
         if idx == 0:
             all_total_dists = total_dists
@@ -773,15 +711,120 @@ if analyze == 1:
     plot_DENSITY_VOLUME_GRAPHS(all_total_dists, all_total_vols, all_total_z, all_new_dists, all_term_dists, all_new_vol, all_term_vol, all_new_z, all_term_z, sav_dir, neighbors, ax_title_size, leg_size, name = '', figsize=(6,5))         
    
     
+   
+    
+    """ Find all distances of new cells to each other """
+    
+    plt.figure(); 
+    for idx, tracked in enumerate(all_tracked_cells_df):
+        coords_new_cells = []
+        new_cells_per_frame = [[] for _ in range(np.max(tracked.FRAME) + 1)]
+ 
+        for cell_num in np.unique(tracked.SERIES):
+        
+            frames_cur_cell = tracked.iloc[np.where(tracked.SERIES == cell_num)].FRAME
+            
+            beginning_frame = np.min(frames_cur_cell)
+            if beginning_frame > 0:   # skip the first frame
+                new_cells_per_frame[beginning_frame].append(cell_num)
+                        
+                
+        for cell_id_frame in new_cells_per_frame:
+            
+            if len(cell_id_frame) == 0:
+                continue;
+                
+            for new_cell_num in cell_id_frame:
+                new_x = tracked.iloc[np.where(tracked.SERIES == new_cell_num)].X * scale_xy
+                new_x = new_x.reset_index(drop=True)[0] ### just get the first frame on which it appears
+                
+                new_y = tracked.iloc[np.where(tracked.SERIES == new_cell_num)].Y * scale_xy
+                new_y = new_y.reset_index(drop=True)[0]
+                
+                new_z = tracked.iloc[np.where(tracked.SERIES == new_cell_num)].Z * scale_z
+                new_z = new_z.reset_index(drop=True)[0]
+                
+                coords_new_cells.append([new_x, new_y, new_z])
+        
+        coords_new_cells = np.vstack(coords_new_cells)
+        from scipy.spatial import KDTree
+    
+        kdtree=KDTree(coords_new_cells)        
+            
+        dist,points=kdtree.query(coords_new_cells,2)
+        
+        dist = dist[:, 1]
+        
+        plt.scatter(coords_new_cells[:, 2], dist, s=4, c='g')
+        plt.xlim(-1, 300)
+        plt.ylim(0, 200)
+        #plt.yticks(np.arange(0, 1.5, 0.2))
+        #plt.legend((p1[0], p2[0]), ('Baseline', 'New cells'), fontsize=leg_size)
+        ax = plt.gca()
+        rs = ax.spines["right"]; rs.set_visible(False); ts = ax.spines["top"]; ts.set_visible(False)
+        #name = 'normalized recovery'
+        plt.tight_layout()    
+
+    
+
+    """ Now also get for ALL cells """
+    
+    plt.figure()
+    for idx, tracked in enumerate(all_tracked_cells_df):
+        coords_all_cells = []
+        for cell_num in np.unique(tracked.SERIES):
+                new_x = tracked.iloc[np.where(tracked.SERIES == cell_num)].X * scale_xy
+                new_x = new_x.reset_index(drop=True)[0] ### just get the first frame on which it appears
+                
+                new_y = tracked.iloc[np.where(tracked.SERIES == cell_num)].Y * scale_xy
+                new_y = new_y.reset_index(drop=True)[0]
+                
+                new_z = tracked.iloc[np.where(tracked.SERIES == cell_num)].Z * scale_z
+                new_z = new_z.reset_index(drop=True)[0]
+                
+                coords_all_cells.append([new_x, new_y, new_z])
+            
+        coords_all_cells = np.vstack(coords_all_cells)
+            
+        kdtree_ALL =KDTree(coords_all_cells)        
+        dist_ALL,points=kdtree_ALL.query(coords_all_cells,2)
+        dist_ALL = dist_ALL[:, 1]
+        plt.scatter(coords_all_cells[:, 2], dist_ALL, s=8, c='k')    
+        
+        
+        ### compare to only new cells
+        new_dists, points = kdtree_ALL.query(coords_new_cells,2)
+        plt.scatter(coords_new_cells[:, 2], new_dists[:, 1], s=4, c='g')    
+        plt.xlim(-1, 300)
+        plt.ylim(0, 200)
+        #plt.yticks(np.arange(0, 1.5, 0.2))
+        #plt.legend((p1[0], p2[0]), ('Baseline', 'New cells'), fontsize=leg_size)
+        ax = plt.gca()
+        rs = ax.spines["right"]; rs.set_visible(False); ts = ax.spines["top"]; ts.set_visible(False)
+        #name = 'normalized recovery'
+        plt.tight_layout()    
+           
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    
     """ 
             LOAD IN CONTROL DATA: 
         """
     if not control:
-        load_dir = './OUTPUT_plots_pooled_data_CONTROL/'
+        load_dir = '../OUTPUT_plots_pooled_data_CONTROL_old/'
         tracked_cells_CONTROL = pd.read_pickle(load_dir + 'tracked_cells_df_CONTROL_POOLED.pkl')
+        
+        save_dir_control = load_dir
 
         """ get new cells from control """
-        mean_control_new, sem_control_new, tracks_control_new, z_control_new, list_indices = plot_size_decay_in_recovery(tracked_cells_CONTROL, sav_dir, start_end_NEW_cell=[1, len(np.unique(tracked_cells_CONTROL.FRAME))],
+        mean_control_new, sem_control_new, tracks_control_new, z_control_new, list_indices = plot_size_decay_in_recovery(tracked_cells_CONTROL, save_dir_control, start_end_NEW_cell=[1, len(np.unique(tracked_cells_CONTROL.FRAME))],
                                                                                        min_survive_frames=3, use_scaled=1, y_lim=8000, last_plot_week=len(np.unique(tracked_cells_CONTROL.FRAME)),
                                                                                        ax_title_size=ax_title_size, x_label='Weeks no treatment', intial_week=0, figsize=(6, 5))
 
@@ -799,6 +842,73 @@ if analyze == 1:
             all_n.append(len(np.where(~np.isnan(tracks_control_new[:,col_idx]))[0]))
             
         sem_control_new = std/np.sqrt(all_n)
+        
+        
+        """ Also delete the rows in the tracked_cells dataframe """
+        list_id_del = []
+        for id_del in to_del:
+            list_id_del.append(list(list_indices[id_del][0]))
+        
+        list_id_del = np.concatenate(list_id_del).ravel()
+        
+        clean = tracked_cells_CONTROL.reset_index(drop=True)
+        clean = clean.drop(list_id_del)
+        
+        
+        
+        norm_tots_CONTROL_ALL, norm_new_CONTROL_ALL = plot_timeframes(clean, sav_dir, add_name='CONTROL_OUTPUT_', depth_lim_lower=0, depth_lim_upper=120, ax_title_size=ax_title_size, leg_size=leg_size)
+    
+        
+        """ For Yev's analysis, then run the code above! """
+        # for idx, tracked in enumerate(all_tracked_cells_df):
+    
+        #     new_cells_per_frame = [[] for _ in range(np.max(tracked.FRAME) + 1)]
+        #     terminated_cells_per_frame = [[] for _ in range(np.max(tracked.FRAME) + 1)]
+     
+        #     for cell_num in np.unique(tracked.SERIES):
+            
+        #         frames_cur_cell = tracked.iloc[np.where(tracked.SERIES == cell_num)].FRAME
+                
+        #         beginning_frame = np.min(frames_cur_cell)
+        #         if beginning_frame > 0:   # skip the first frame
+        #             new_cells_per_frame[beginning_frame].append(cell_num)
+                            
+        #         len_frames = len(np.unique(tracked.FRAME))
+                
+                
+        #         term_frame = np.max(frames_cur_cell)
+        #         if term_frame < len_frames - 1:   # skip the last frame
+        #             terminated_cells_per_frame[term_frame].append(cell_num)
+            
+    
+    
+        #     ### loop through each frame and all the new cells and find "i.... i + n" nearest neighbors        
+        #     """ Plt density of NEW cells vs. depth """
+        #     scaled_vol = 1
+        #     total_dists, total_vols, total_z, new_dists, term_dists, new_vol, term_vol, new_z, term_z, new_EXCLUDE, new_EXCLUDE_z, term_EXCLUDE, term_EXCLUDE_z = plot_density_and_volume(tracked, new_cells_per_frame, terminated_cells_per_frame, scale_xy, scale_z, sav_dir, neighbors, ax_title_size, leg_size, scaled_vol=scaled_vol, plot=0)
+    
+    
+        #     ### initialize if first time
+        #     if idx == 0:
+        #         all_total_dists = total_dists
+        #         all_total_vols = total_vols
+        #         all_total_z = total_z
+        #         all_new_dists = new_dists
+        #         all_term_dists = term_dists
+        #         all_new_vol = new_vol
+        #         all_term_vol = term_vol
+        #         all_new_z = new_z
+        #         all_term_z = term_z
+                
+                
+        #         all_new_EXCLUDE = new_EXCLUDE
+        #         all_new_EXCLUDE_z = new_EXCLUDE_z
+                
+        #         all_term_EXCLUDE = term_EXCLUDE
+        #         all_term_EXCLUDE_z = term_EXCLUDE_z
+        # plot_DENSITY_VOLUME_GRAPHS(all_total_dists, all_total_vols, all_total_z, all_new_dists, all_term_dists, all_new_vol, all_term_vol, all_new_z, all_term_z, sav_dir, neighbors, ax_title_size, leg_size, name = '', figsize=(6,5))         
+               
+            
                     
 
     """ 
@@ -1372,86 +1482,7 @@ if analyze == 1:
         #     for p in p_vals_kruskal.iterrows():
         #         print(round(p[1], 5))
 
-    """ Predict age based on size??? 
-    
-            what is probability that cell is 1 week old P(B) given that it is size X P(A) == P(B|A) == P(A and B) / P(A)
-            P(A) == prob cell is ABOVE size X
-            P(B) == prob cell 1 week old
-            P(A and B) == prob cell is at least 1 week old AND above size X
-            
-            
-            
-            ***PROBABILITY compared to time-point paired controls!!!
-                i.e. get control cells from 1 week, 2 weeks and 3 weeks after cuprizone treatment
-            
-            
-            
-            
-    """
-    """ DOUBLE CHECK THIS PROBABILITY CALCULATION!!!"""
-    
-    upper_r = 6000
-    lower_r = 0
-    step = 50
-    thresh_range = [lower_r, upper_r, step]
-    
-    
-    """    ### SHOULD BE COMPARED TO CELLS ON LATER TIMEFRAMES???? IN TERMS OF SIZE???
-    ### because baseline may have some new cells as well!!!
-    
-                ***compared with cells/themselves that have been around for > 8 weeks???
-                
-                ****RETROSPECTIVELY CAN SEE IF NEW CELLS ARE INJURED FASTER AT EARLIER TIMEPOINTS by cuprizone???
-                ***plot size vs. death time
-                    ==> example in 030!!!
-                
-    """    
-    probability_curves(sav_dir, first_frame_sizes, first_frame_1_week, first_frame_2_week, first_frame_3_week, thresh_range, ax_title_size, leg_size, figsize=(7, 5))
 
-    
-    """ Plot density KDE """
-
-    
-    import seaborn as sns    
-    plt.figure(figsize=(7,5))
-    #plt.figure()
-    ax = plt.gca()
-    sns.set_style('whitegrid')
-    rs = ax.spines["right"]; rs.set_visible(False)
-    ts = ax.spines["top"]; ts.set_visible(False)  
-    
-
-    sns.distplot(np.asarray(first_frame_1_week)/1000, bins=20, hist=False, kde=True, 
-                  label='1 week old',axlabel='Soma volume ($mm^3$)', color=(0, 0.9, 0), kde_kws={'linestyle':':', 'linewidth':3})
-    sns.distplot(np.asarray(first_frame_2_week)/1000, bins=20, hist=False, kde=True,
-                  label='2 weeks old',axlabel='Soma volume ($mm^3$)', color=(0, 0.7, 0), kde_kws={'linestyle':'-.', 'linewidth':3})
-    sns.distplot(np.asarray(first_frame_3_week)/1000, bins=20, hist=False, kde=True, 
-                  label='3 weeks old', axlabel='Soma volume ($mm^3$)', color=(0, 0.4, 0), kde_kws={'linestyle':'--', 'linewidth':3})
-    sns.distplot(np.asarray(first_frame_sizes)/1000, bins=20, hist=False, kde=True, 
-                  label='Control', axlabel='Soma volume ($mm^3$)', color=(0, 0, 0), kde_kws={'linestyle':'-', 'linewidth':3})      
-
-    plt.xlabel('Soma volume ($mm^3$)', fontsize=ax_title_size)
-    plt.ylabel('Density', fontsize=ax_title_size)
-
-    plt.legend(frameon=False, fontsize=leg_size)
-    plt.tight_layout()
-    # Turns off grid on the left Axis.
-    ax.grid(False)
-    ax.spines['bottom'].set_color('black')
-    # ax.spines['top'].set_color('#dddddd') 
-    # ax.spines['right'].set_color('red')
-    ax.spines['left'].set_color('black')
-    ax.tick_params(axis='x', colors='black')
-    ax.tick_params(axis='y', colors='black')
-    
-        
-    plt.xticks(np.arange(0 , 9))
-    plt.xlim(0, 8000/1000 + 0.2)
-    plt.ylim(0, 1)
-    #plt.xlim(-1, len(y_pos))   
-    plt.rcParams['xtick.bottom'] = True
-    plt.rcParams['ytick.left'] = True
-    plt.savefig(sav_dir + 'KDE density distributions RECOVERY.png')
 
     """ Plot scatter for dying cells
     
@@ -1512,26 +1543,6 @@ if analyze == 1:
     
     
         """ STATISTICS """
-        # ### UNPAIRED 2-tailed, assume equal variances
-        # t_test = sp.stats.ttest_ind(first_frame_sizes, died_frame_1, nan_policy='omit')
-        # print('p-value for baseline vs. week 1 of recovery for size: ' + str(t_test.pvalue))
-        
-        # effect_size = cohen_d(first_frame_sizes, died_frame_1)
-        # print('effect size for baseline vs. week 3 of recovery for size: ' + str(effect_size))
-        
-        # t_test = sp.stats.ttest_ind(first_frame_sizes, died_frame_2, nan_policy='omit')
-        # print('p-value for baseline vs. week 2 of recovery for size: ' + str(t_test.pvalue))        
-    
-        # effect_size = cohen_d(first_frame_sizes, died_frame_2)
-        # print('effect size for baseline vs. week 3 of recovery for size: ' + str(effect_size))
-    
-        
-        # t_test = sp.stats.ttest_ind(first_frame_sizes, died_frame_3, nan_policy='omit')
-        # print('p-value for baseline vs. week 3 of recovery for size: ' + str(t_test.pvalue))
-        
-        # effect_size = cohen_d(first_frame_sizes, died_frame_3)
-        # print('effect size for baseline vs. week 3 of recovery for size: ' + str(effect_size))
-         
         
         
         combined = np.concatenate((died_frame_2, died_frame_3, died_frame_4))
@@ -1545,190 +1556,3 @@ if analyze == 1:
 
 
                 
-
-
-    """ Plot dying on first frame vs. cell size, to see if larger/newer cells die first? """
-    
-    thresh_range = [100, 2000, 50]
-    all_probs = []; all_sizes = []
-    #for size_thresh in range(500, 4100, 100):
-    cur_frame = np.concatenate((died_frame_2, died_frame_3, died_frame_4))
-        
-    for size_thresh in range(thresh_range[0], thresh_range[1], thresh_range[2]):   ### FOR RESCALED VOLUMES
-        all_cell_sizes = np.concatenate((first_frame_sizes, died_frame_2, died_frame_3, died_frame_4))
-        num_A = 0
-        total_num = len(all_cell_sizes)
-        for sizes in all_cell_sizes:
-            
-            #print(size_thresh)
-            if sizes < size_thresh:
-                num_A += 1
-                
-        if num_A > 0:
-
-            P_A = num_A/total_num;
-    
-       
-            ### find P(A and B) *** NOT equal to P(A) * P(B) because are INDEPENDENT events!!!
-            ### so only way to find is to count # that are BOTH 1 week young AND > size thresh / num total
-            num_below_thresh_1_week = len(np.where(np.asarray(cur_frame) < size_thresh)[0])
-            ### SHOULD BE DIVIDED BY TOTAL # OF first frame cells??? i.e. total number of cells, not occurences
-            #len(np.unique(tracked_cells_df.SERIES))
-            
-            P_A_B = num_below_thresh_1_week/total_num;
-            #P_A_B = num_above_thresh_1_week/len(np.unique(tracked_cells_df.SERIES));
-            
-            PB_A = P_A_B/P_A
-            
-            #print(PB_A)
-            
-            all_probs.append(PB_A)
-            all_sizes.append(size_thresh)
-    
-            
-            
-    plt.figure(figsize=(4.5,5)); plt.plot(all_sizes, all_probs, 'k')
-    ax = plt.gca()
-    plt.xlabel('Soma volume ($\u03bcm^3$)', fontsize=ax_title_size); plt.ylabel('Probability death next week', fontsize=ax_title_size)
-    plt.ylim(0, 1)   ### leave room for significance!!!
-
-    rs = ax.spines["right"]; rs.set_visible(False)
-    ts = ax.spines["top"]; ts.set_visible(False)  
-    plt.tight_layout()
-    # prop_above_1st_frame = 
-    plt.savefig(sav_dir + 'DYING CELLS size probability.png')
-    
-        
-
-
-    """ Plot probability cells is dying compared to control population 
-    
-    """
-
-
-    
-
-
-
-
-
-
-
-
-
-
-    """
-        Plot density of ONLY v235 trial
-    """    
-
-    """ Scale Z to mesh """
-    #m = np.max(input_im, axis=-1)
-    # print('scaling cell Z to mesh')
-    # for idx in range(len(two_thirty_tracked)):
-        
-    #     cell = two_thirty_tracked.iloc[idx]
-    
-    #     x = cell.X
-    #     y = cell.Y
-    #     z = cell.Z
-        
-        
-    #     ### ENSURE ORDER OF XY IS CORRECT HERE!!!
-    #     scale = mesh_235[int(y), int(x)]
-    
-    #     new_z = z - scale
-        
-    #     ### DEBUG
-    #     #m[int(y), int(x)] = 0
-    #     cell.Z = new_z
-    
-    #     two_thirty_tracked.iloc[idx] = cell
-
-    # neighbors = 10
-    
-    # new_cells_per_frame = [[] for _ in range(len(np.unique(two_thirty_tracked.FRAME)) + 1)]
-    # terminated_cells_per_frame = [[] for _ in range(len(np.unique(two_thirty_tracked.FRAME)) + 1)]
-    # for cell_num in np.unique(two_thirty_tracked.SERIES):
-        
-    #     frames_cur_cell = two_thirty_tracked.iloc[np.where(two_thirty_tracked.SERIES == cell_num)].FRAME
-        
-    #     beginning_frame = np.min(frames_cur_cell)
-    #     if beginning_frame > 0:   # skip the first frame
-    #         new_cells_per_frame[beginning_frame].append(cell_num)
-                    
-    #     term_frame = np.max(frames_cur_cell)
-    #     if term_frame < len(terminated_cells_per_frame) - 1:   # skip the last frame
-    #         terminated_cells_per_frame[term_frame].append(cell_num)
-
-    # plot_density_and_volume(two_thirty_tracked, new_cells_per_frame, terminated_cells_per_frame, scale_xy, scale_z, sav_dir, neighbors, 
-    #                         ax_title_size, leg_size, scaled_vol=0, name='only_235_')
-
-    
-
-
-
-
-
-
-    """
-        Density (histogram of cells) by depth on frame 0 (baseline)
-            using timeseries v235
-    """
-    input_path = list_folder[0]
-    foldername = input_path.split('/')[-2]
-    load_dir_hist = input_path + '/' + foldername + '_output_FULL_AUTO_no_next_10_125762_TEST_6/'
-    
-    tracked_cells_df_FULL = pd.read_pickle(load_dir_hist + 'tracked_cells_df_RAW_pickle.pkl')
-    
-    
-    """ Scale Z to mesh """
-    #m = np.max(input_im, axis=-1)
-    print('scaling cell Z to mesh')
-    for idx in range(len(tracked_cells_df_FULL)):
-        
-        cell = tracked_cells_df_FULL.iloc[idx]
-    
-        x = cell.X
-        y = cell.Y
-        z = cell.Z
-        
-        
-        ### ENSURE ORDER OF XY IS CORRECT HERE!!!
-        scale = mesh_235[int(y), int(x)]
-    
-        new_z = z - scale
-        
-        ### DEBUG
-        #m[int(y), int(x)] = 0
-        cell.Z = new_z
-    
-        tracked_cells_df_FULL.iloc[idx] = cell
-
-    
-    plt.figure(figsize = (13, 2))
-    #plt.rcParams['figure.dpi'] = 140        
-    all_z_frame_0 = tracked_cells_df_FULL.loc[tracked_cells_df_FULL['FRAME'].isin([0])].Z
-    
-    all_z_scaled = all_z_frame_0 * scale_z
-    
-    
-    ### only get cells below 420 um
-    all_z_scaled = [x for x in all_z_scaled if x <= 420]
-    
-    plt.hist(all_z_scaled, bins=40, color='gray')
-    plt.xlabel('Depth (\u03bcm)', fontsize=ax_title_size)
-    plt.ylabel('Num cells', fontsize=ax_title_size)
-    ax = plt.gca()
-    rs = ax.spines["right"]; rs.set_visible(False)
-    ts = ax.spines["top"]; ts.set_visible(False)  
-    plt.tight_layout()        
-    plt.savefig(sav_dir + 'density along depth.png')
-    
-    # """ Set globally """
-    # plt.rc('xtick',labelsize=16)
-    # plt.rc('ytick',labelsize=16)
-    # ax_title_size = 18
-    # leg_size = 14
-
-        
-    
